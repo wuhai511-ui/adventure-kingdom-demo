@@ -2,9 +2,9 @@
   "name": "adventure-kingdom-demo",
   "version": "2.0.0",
   "description": "冒险王国 - 儿童任务积分奖励游戏化教育 Demo",
+  "private": true,
   "scripts": {
-    "dev": "npx serve .",
-    "build": "echo 'static site, no build needed'"
+    "dev": "npx serve ."
   },
   "keywords": ["education", "kids", "gamification", "tasks", "rewards"],
   "license": "MIT"
