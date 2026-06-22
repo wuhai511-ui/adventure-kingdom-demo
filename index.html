@@ -108,6 +108,31 @@ html,body{ height:100%; font-family:"PingFang SC","Microsoft YaHei",system-ui,sa
 @keyframes sweepMove{ 0%,100%{transform:translateX(-10px) rotate(-15deg);} 50%{transform:translateX(10px) rotate(15deg);} }
 .anim-pet .emoji{ animation:petHop 1s ease-in-out infinite; }
 @keyframes petHop{ 0%,100%{transform:translateY(0);} 50%{transform:translateY(-14px) rotate(5deg);} }
+/* 学龄前任务动画 */
+.anim-dress .emoji{ animation:dressUp 1.5s ease-in-out infinite; }
+@keyframes dressUp{ 0%,100%{transform:translateY(0) scale(1);} 50%{transform:translateY(-6px) scale(1.06);} }
+.anim-shoe .emoji{ animation:shoeStep .7s ease-in-out infinite; }
+@keyframes shoeStep{ 0%,100%{transform:translateY(0) rotate(0);} 50%{transform:translateY(-8px) rotate(-6deg);} }
+.anim-eat .emoji{ animation:eatNibble 2s ease-in-out infinite; }
+@keyframes eatNibble{ 0%,100%{transform:rotate(0);} 25%{transform:rotate(-5deg);} 75%{transform:rotate(5deg);} }
+.anim-teddy .emoji{ animation:teddyWobble 1.8s ease-in-out infinite; }
+@keyframes teddyWobble{ 0%,100%{transform:rotate(-6deg);} 50%{transform:rotate(6deg) translateY(-4px);} }
+.anim-toilet .emoji{ animation:toiletBounce 2s ease-in-out infinite; }
+@keyframes toiletBounce{ 0%,100%{transform:translateY(0);} 30%{transform:translateY(-5px) scale(1.05);} 60%{transform:translateY(2px);} }
+.anim-wash .emoji{ animation:washRub 1s ease-in-out infinite; }
+@keyframes washRub{ 0%,100%{transform:rotate(-8deg);} 50%{transform:rotate(8deg);} }
+.anim-carry .emoji{ animation:carrySwing 1.5s ease-in-out infinite; }
+@keyframes carrySwing{ 0%,100%{transform:rotate(-10deg);} 50%{transform:rotate(10deg) translateY(-3px);} }
+.anim-wave .emoji{ animation:waveHi .9s ease-in-out infinite; }
+@keyframes waveHi{ 0%,100%{transform:rotate(0) translateX(0);} 25%{transform:rotate(-15deg) translateX(-6px);} 75%{transform:rotate(15deg) translateX(6px);} }
+.anim-read .emoji{ animation:readOpen 2.2s ease-in-out infinite; }
+@keyframes readOpen{ 0%,100%{transform:rotateY(0) scale(1);} 50%{transform:rotateY(20deg) scale(1.04);} }
+.anim-draw .emoji{ animation:drawScribble 1.6s ease-in-out infinite; }
+@keyframes drawScribble{ 0%,100%{transform:rotate(-8deg) translateY(0);} 50%{transform:rotate(8deg) translateY(-4px);} }
+.anim-sing .emoji{ animation:singNote 1.3s ease-in-out infinite; }
+@keyframes singNote{ 0%,100%{transform:scale(1) translateY(0);} 50%{transform:scale(1.08) translateY(-6px);} }
+.anim-smile .emoji{ animation:smileGlow 2.5s ease-in-out infinite; }
+@keyframes smileGlow{ 0%,100%{transform:scale(1);} 50%{transform:scale(1.1);} }
 
 /* 卡片信息区 */
 .tc-body{ padding:16px 18px 18px; }
@@ -498,6 +523,7 @@ html,body{ height:100%; font-family:"PingFang SC","Microsoft YaHei",system-ui,sa
 
       <div class="tmpl-cat" id="tmplCat">
         <div class="c sel" data-cat="all" onclick="pickCat(this)">全部</div>
+        <div class="c" data-cat="学龄前" onclick="pickCat(this)">学龄前</div>
         <div class="c" data-cat="家务" onclick="pickCat(this)">家务</div>
         <div class="c" data-cat="学习" onclick="pickCat(this)">学习</div>
         <div class="c" data-cat="运动" onclick="pickCat(this)">运动</div>
@@ -680,7 +706,22 @@ var S = {
     {id:7, icon:"🥗", name:"自己收拾书包", pinyin:"zì jǐ shōu shi shū bāo", desc:"按课表整理好明天书本", pts:6, review:"photo", anim:"bag"},
     {id:8, icon:"🦴", name:"倒垃圾", pinyin:"dào lā jī", desc:"把家里垃圾打包扔掉", pts:5, review:"auto", anim:"trash"},
     {id:9, icon:"🧹", name:"整理书桌", pinyin:"zhěng lǐ shū zhuō", desc:"把书本文具归位擦干净", pts:8, review:"photo", anim:"sweep"},
-    {id:10, icon:"🐶", name:"照顾宠物", pinyin:"zhào gù chǒng wù", desc:"给小宠物添食添水", pts:5, review:"auto", anim:"pet"}
+    {id:10, icon:"🐶", name:"照顾宠物", pinyin:"zhào gù chǒng wù", desc:"给小宠物添食添水", pts:5, review:"auto", anim:"pet"},
+    {id:11, icon:"👕", name:"自己穿衣服", pinyin:"zì jǐ chuān yī fu", desc:"早上自己选衣服穿好", pts:8, review:"photo", anim:"dress"},
+    {id:12, icon:"👟", name:"自己穿鞋子", pinyin:"zì jǐ chuān xié zi", desc:"分清左右脚自己穿", pts:5, review:"photo", anim:"shoe"},
+    {id:13, icon:"🍚", name:"自己吃饭", pinyin:"zì jǐ chī fàn", desc:"自己用小勺子吃饭不洒", pts:8, review:"confirm", anim:"eat"},
+    {id:14, icon:"🧸", name:"玩具送回家", pinyin:"wán jù sòng huí jiā", desc:"玩完玩具收进玩具箱", pts:6, review:"photo", anim:"teddy"},
+    {id:15, icon:"🪥", name:"自己刷牙", pinyin:"zì jǐ shuā yá", desc:"早晚自己挤牙膏刷牙", pts:5, review:"auto", anim:"tooth"},
+    {id:16, icon:"🚽", name:"自己上厕所", pinyin:"zì jǐ shàng cè suǒ", desc:"便后自己冲水洗手", pts:6, review:"auto", anim:"toilet"},
+    {id:17, icon:"🧼", name:"自己洗手", pinyin:"zì jǐ xǐ shǒu", desc:"饭前便后用洗手液洗手", pts:4, review:"auto", anim:"wash"},
+    {id:18, icon:"🩴", name:"帮妈妈拿东西", pinyin:"bāng mā ma ná dōng xi", desc:"帮大人拿拖鞋递遥控器", pts:6, review:"confirm", anim:"carry"},
+    {id:19, icon:"👋", name:"说你好和谢谢", pinyin:"shuō nǐ hǎo hé xiè xiè", desc:"见到人主动打招呼说谢谢", pts:5, review:"auto", anim:"wave"},
+    {id:20, icon:"📖", name:"认真听故事", pinyin:"rèn zhēn tīng gù shì", desc:"安静听完一本绘本说说讲了什么", pts:12, review:"confirm", anim:"read"},
+    {id:21, icon:"🎨", name:"画一幅画", pinyin:"huà yī fú huà", desc:"用水彩笔或蜡笔自由画画", pts:10, review:"photo", anim:"draw"},
+    {id:22, icon:"🎤", name:"唱一首儿歌", pinyin:"chàng yī shǒu ér gē", desc:"完整唱一首学过的儿歌", pts:8, review:"confirm", anim:"sing"},
+    {id:23, icon:"✏️", name:"认识一个汉字", pinyin:"rèn shi yī gè hàn zì", desc:"跟着大人认读一个新汉字", pts:6, review:"confirm", anim:"write"},
+    {id:24, icon:"🧸", name:"自己收拾绘本", pinyin:"zì jǐ shōu shi huì běn", desc:"把看完的绘本放回书架原位", pts:6, review:"photo", anim:"teddy"},
+    {id:25, icon:"😊", name:"不哭闹的一天", pinyin:"bù kū nào de yī tiān", desc:"遇到不开心也好好说话不发脾气", pts:12, review:"confirm", anim:"smile"}
   ],
   pendingTasks:[], // 孩子提交待家长审核
   approvedTasks:[],
@@ -711,6 +752,21 @@ var S = {
   ],
   // 任务模板库（50个，按手册）
   templates:[
+    {cat:"学龄前",icon:"👕",name:"自己穿衣服",desc:"早上自己选衣服穿好",pts:8,review:"photo"},
+    {cat:"学龄前",icon:"👟",name:"自己穿鞋子",desc:"分清左右脚自己穿",pts:5,review:"photo"},
+    {cat:"学龄前",icon:"🍚",name:"自己吃饭",desc:"自己用小勺子吃饭不洒",pts:8,review:"confirm"},
+    {cat:"学龄前",icon:"🧸",name:"玩具送回家",desc:"玩完玩具收进玩具箱",pts:6,review:"photo"},
+    {cat:"学龄前",icon:"🪥",name:"自己刷牙",desc:"早晚自己挤牙膏刷牙",pts:5,review:"auto"},
+    {cat:"学龄前",icon:"🧼",name:"自己洗手",desc:"饭前便后用洗手液洗手",pts:4,review:"auto"},
+    {cat:"学龄前",icon:"🩴",name:"帮妈妈拿东西",desc:"帮大人拿拖鞋递遥控器",pts:6,review:"confirm"},
+    {cat:"学龄前",icon:"👋",name:"说你好和谢谢",desc:"见到人主动打招呼说谢谢",pts:5,review:"auto"},
+    {cat:"学龄前",icon:"📖",name:"认真听故事",desc:"安静听完一本绘本说说讲了什么",pts:12,review:"confirm"},
+    {cat:"学龄前",icon:"🎨",name:"画一幅画",desc:"用水彩笔或蜡笔自由画画",pts:10,review:"photo"},
+    {cat:"学龄前",icon:"🎤",name:"唱一首儿歌",desc:"完整唱一首学过的儿歌",pts:8,review:"confirm"},
+    {cat:"学龄前",icon:"✏️",name:"认识一个汉字",desc:"跟着大人认读一个新汉字",pts:6,review:"confirm"},
+    {cat:"学龄前",icon:"🧸",name:"自己收拾绘本",desc:"把看完的绘本放回书架原位",pts:6,review:"photo"},
+    {cat:"学龄前",icon:"😊",name:"不哭闹的一天",desc:"遇到不开心也好好说话不发脾气",pts:12,review:"confirm"},
+    {cat:"学龄前",icon:"🚽",name:"自己上厕所",desc:"便后自己冲水洗手",pts:6,review:"auto"},
     {cat:"家务",icon:"🛏️",name:"整理床铺",desc:"起床后把小被子叠整齐",pts:5,review:"photo"},
     {cat:"家务",icon:"🧹",name:"整理书桌",desc:"把书本文具归位，桌面擦干净",pts:8,review:"photo"},
     {cat:"家务",icon:"🐶",name:"玩具归位",desc:"玩完玩具送它们回家",pts:6,review:"photo"},
