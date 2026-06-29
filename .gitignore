@@ -1,5 +1,11 @@
+# 依赖
 node_modules/
-.env
-*.bak
+
+# 系统
 .DS_Store
-npm-debug.log*
+Thumbs.db
+
+# 编辑器
+.vscode/
+.idea/
+*.swp
