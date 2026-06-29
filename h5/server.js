@@ -87,12 +87,21 @@ app.post('/api/auth/register', function (req, res) {
   if (db.users.find(function (u) { return u.phone === p.phone; })) return res.json({ code: -1, msg: '该手机号已注册' });
   if (p.password.length < 4) return res.json({ code: -1, msg: '密码至少4位' });
 
+  var todayDay = (function(){var d=new Date().getDay();return d===0?7:d;})();
   var user = {
     id: nextId(), phone: p.phone, password_hash: bcrypt.hashSync(p.password, 10),
     child_name: p.childName || '小勇士', avatar: '🦊', role_emoji: '🦊',
-    coins: 0, gems: 0, streak: 0, lastCheckin: null, xp: 0, current_level: 1, current_day: (function(){var d=new Date().getDay();return d===0?7:d;})(),
+    coins: 0, gems: 0, streak: 0, lastCheckin: null, xp: 0, current_level: 1, current_day: todayDay,
     wechat_openid: '', wechat_unionid: '', onboarding_done: false,
-    pin_hash: null, pin_fails: 0, pin_locked_until: null
+    pin_hash: null, pin_fails: 0, pin_locked_until: null,
+    activeChild: 0,
+    children: [{ id: 0, name: p.childName || '小勇士', avatar: '🦊',
+                coins: 0, gems: 0, saved: 0, goal: 200, xp: 0, level: 1,
+                streak: 0, lastCheckin: null, treasureOpened: false,
+                combo: 0, todayGain: 0, spent: 0,
+                currentLevel: 1, currentDay: todayDay,
+                weekProgress: {1:[0,0,0,0,0,0,0],2:[0,0,0,0,0,0,0],3:[0,0,0,0,0,0,0]},
+                dayDone: {} }]
   };
   db.users.push(user);
 
@@ -392,6 +401,148 @@ app.get('/api/auth/pin-status', authMiddleware, function (req, res) {
   return res.json({ code: 0, data: { hasPin: !!user.pin_hash, locked: locked, remainingLock: remainingLock } });
 });
 
+// ===== Account Management =====
+app.post('/api/auth/update-pin', authMiddleware, function (req, res) {
+  var user = db.users.find(function (u) { return u.id === req.userId; });
+  if (!user) return res.json({ code: -1, msg: '用户不存在' });
+  var oldPin = req.body.oldPin;
+  var newPin = req.body.newPin;
+  if (!oldPin || !newPin) return res.json({ code: -1, msg: '旧PIN和新PIN不能为空' });
+  if (!/^\d{4}$/.test(newPin)) return res.json({ code: -1, msg: 'PIN必须是4位数字' });
+  if (!user.pin_hash) return res.json({ code: -1, msg: '尚未设置PIN' });
+  if (!bcrypt.compareSync(oldPin, user.pin_hash)) return res.json({ code: -1, msg: '旧PIN错误' });
+  user.pin_hash = bcrypt.hashSync(newPin, 10);
+  user.pin_fails = 0;
+  user.pin_locked_until = null;
+  saveDB(db);
+  return res.json({ code: 0, msg: 'PIN已更新' });
+});
+
+app.post('/api/auth/logout', authMiddleware, function (req, res) {
+  return res.json({ code: 0, msg: '已注销' });
+});
+
+// ===== Multi-Child Support =====
+app.get('/api/children', authMiddleware, function (req, res) {
+  var user = db.users.find(function (u) { return u.id === req.userId; });
+  if (!user) return res.json({ code: -1, msg: '用户不存在' });
+  if (!user.children || user.children.length === 0) {
+    var todayDay = (function(){var d=new Date().getDay();return d===0?7:d;})();
+    user.children = [{ id: 0, name: user.child_name || '小勇士', avatar: user.avatar || '🦊',
+      coins: user.coins || 0, gems: user.gems || 0, saved: 0, goal: 200, xp: user.xp || 0, level: 1,
+      streak: user.streak || 0, lastCheckin: user.lastCheckin || null, treasureOpened: false,
+      combo: 0, todayGain: 0, spent: 0,
+      currentLevel: user.current_level || 1, currentDay: user.current_day || todayDay,
+      weekProgress: {1:[0,0,0,0,0,0,0],2:[0,0,0,0,0,0,0],3:[0,0,0,0,0,0,0]},
+      dayDone: {} }];
+    user.activeChild = 0;
+  }
+  var summary = user.children.map(function (c) {
+    return { id: c.id, name: c.name, avatar: c.avatar, coins: c.coins, gems: c.gems, level: c.level || 1 };
+  });
+  return res.json({ code: 0, data: { children: summary, activeChild: user.activeChild || 0 } });
+});
+
+app.post('/api/children', authMiddleware, function (req, res) {
+  var user = db.users.find(function (u) { return u.id === req.userId; });
+  if (!user) return res.json({ code: -1, msg: '用户不存在' });
+  if (!user.children) user.children = [];
+  var maxId = -1;
+  for (var k = 0; k < user.children.length; k++) {
+    if (user.children[k].id > maxId) maxId = user.children[k].id;
+  }
+  var newId = maxId + 1;
+  var todayDay = (function(){var d=new Date().getDay();return d===0?7:d;})();
+  var child = {
+    id: newId,
+    name: (req.body.name || '小勇士').trim(),
+    avatar: req.body.avatar || '🦊',
+    coins: 0, gems: 0, saved: 0, goal: 200, xp: 0, level: 1,
+    streak: 0, lastCheckin: null, treasureOpened: false,
+    combo: 0, todayGain: 0, spent: 0,
+    currentLevel: 1, currentDay: todayDay,
+    weekProgress: {1:[0,0,0,0,0,0,0],2:[0,0,0,0,0,0,0],3:[0,0,0,0,0,0,0]},
+    dayDone: {}
+  };
+  user.children.push(child);
+  saveDB(db);
+  return res.json({ code: 0, data: { id: newId } });
+});
+
+app.post('/api/children/switch', authMiddleware, function (req, res) {
+  var user = db.users.find(function (u) { return u.id === req.userId; });
+  if (!user) return res.json({ code: -1, msg: '用户不存在' });
+  if (!user.children) user.children = [];
+  var targetId = req.body.childId;
+  if (targetId === undefined || targetId === null) return res.json({ code: -1, msg: '请指定孩子ID' });
+  targetId = parseInt(targetId);
+  var targetIdx = -1;
+  for (var m = 0; m < user.children.length; m++) {
+    if (user.children[m].id === targetId) { targetIdx = m; break; }
+  }
+  if (targetIdx < 0) return res.json({ code: -1, msg: '孩子不存在' });
+  var activeIdx = -1;
+  var activeChildId = user.activeChild || 0;
+  for (var n = 0; n < user.children.length; n++) {
+    if (user.children[n].id === activeChildId) { activeIdx = n; break; }
+  }
+  if (activeIdx >= 0 && user.children[activeIdx]) {
+    var cur = user.children[activeIdx];
+    cur.coins = user.coins;
+    cur.gems = user.gems;
+    cur.xp = user.xp;
+    cur.currentLevel = user.current_level;
+    cur.currentDay = user.current_day;
+    cur.streak = user.streak;
+    cur.lastCheckin = user.lastCheckin;
+  }
+  var target = user.children[targetIdx];
+  if (target) {
+    user.coins = target.coins || 0;
+    user.gems = target.gems || 0;
+    user.xp = target.xp || 0;
+    user.current_level = target.currentLevel || 1;
+    user.current_day = target.currentDay || 1;
+    user.streak = target.streak || 0;
+    user.lastCheckin = target.lastCheckin || null;
+    user.child_name = target.name || '小勇士';
+    user.avatar = target.avatar || '🦊';
+    user.role_emoji = target.avatar || '🦊';
+  }
+  user.activeChild = targetId;
+  saveDB(db);
+  return res.json({ code: 0, data: { childId: targetId } });
+});
+
+app.delete('/api/children/:id', authMiddleware, function (req, res) {
+  var user = db.users.find(function (u) { return u.id === req.userId; });
+  if (!user) return res.json({ code: -1, msg: '用户不存在' });
+  if (!user.children || user.children.length <= 1) return res.json({ code: -1, msg: '至少保留一个孩子' });
+  var childId = parseInt(req.params.id);
+  var idx = -1;
+  for (var p = 0; p < user.children.length; p++) {
+    if (user.children[p].id === childId) { idx = p; break; }
+  }
+  if (idx < 0) return res.json({ code: -1, msg: '孩子不存在' });
+  user.children.splice(idx, 1);
+  if (user.activeChild === childId) {
+    user.activeChild = user.children[0].id;
+    var first = user.children[0];
+    user.coins = first.coins || 0;
+    user.gems = first.gems || 0;
+    user.xp = first.xp || 0;
+    user.current_level = first.currentLevel || 1;
+    user.current_day = first.currentDay || 1;
+    user.streak = first.streak || 0;
+    user.lastCheckin = first.lastCheckin || null;
+    user.child_name = first.name || '小勇士';
+    user.avatar = first.avatar || '🦊';
+    user.role_emoji = first.avatar || '🦊';
+  }
+  saveDB(db);
+  return res.json({ code: 0, msg: '已删除' });
+});
+
 // ===== Level Titles =====
 var LEVEL_TITLES = [
   { minLevel: 1, title: "小探险家" },
@@ -439,7 +590,9 @@ app.get('/api/user/profile', authMiddleware, function (req, res) {
     coins: u.coins, gems: u.gems, streak: u.streak, xp: u.xp,
     currentLevel: u.current_level, currentDay: u.current_day,
     wechatOpenid: u.wechat_openid || '', wechatLinked: !!u.wechat_openid,
-    onboardingDone: u.onboarding_done !== false
+    onboardingDone: u.onboarding_done !== false,
+    activeChild: u.activeChild || 0,
+    childrenCount: (u.children||[]).length
   } });
 });
 

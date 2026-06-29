@@ -400,6 +400,28 @@ html,body{ height:100%; font-family:"PingFang SC","Microsoft YaHei",system-ui,sa
 .pin-lock-emoji{ font-size:40px; margin-bottom:8px; animation:pinLockPulse 1.5s ease-in-out infinite; }
 @keyframes pinLockPulse{ 0%,100%{transform:scale(1);opacity:1;} 50%{transform:scale(1.1);opacity:.6;} }
 .pin-lock-text{ font-size:14px; font-weight:800; color:var(--red); }
+
+/* ===== Parent Account ===== */
+.p-account-info .p-info-row{ display:flex; align-items:center; padding:12px 0; border-bottom:1px solid var(--parent-line); }
+.p-account-info .p-info-row:last-child{ border:0; }
+.p-info-label{ width:64px; font-size:13px; font-weight:700; color:var(--parent-sub); flex:none; }
+.p-info-val{ flex:1; font-size:14px; font-weight:800; color:var(--parent-ink); }
+.child-item{ display:flex; align-items:center; gap:12px; padding:14px 12px; border-radius:12px; margin-bottom:8px; background:var(--parent-card); border:1px solid var(--parent-line); cursor:pointer; transition:all .15s; }
+.child-item.active{ border-color:var(--parent-brand); box-shadow:0 0 0 3px rgba(139,111,71,.12); background:#FFFBF5; }
+.child-item:active{ transform:scale(.98); }
+.child-avatar{ width:44px; height:44px; border-radius:50%; background:linear-gradient(135deg,var(--gold-light),var(--gold)); display:flex; align-items:center; justify-content:center; font-size:24px; flex:none; }
+.child-info{ flex:1; min-width:0; } .child-info b{ display:block; font-size:14px; font-weight:800; color:var(--parent-ink); } .child-info span{ font-size:11px; color:var(--parent-sub); }
+.child-delete{ width:32px; height:32px; border:none; border-radius:50%; background:rgba(224,123,110,.1); color:var(--red); font-size:16px; cursor:pointer; display:flex; align-items:center; justify-content:center; flex:none; transition:background .15s; }
+.child-delete:active{ background:rgba(224,123,110,.25); }
+.btn-p.red{ background:var(--red); box-shadow:0 4px 0 #C55A4E; margin-top:20px; }
+.btn-p.red:active{ transform:translateY(2px); box-shadow:0 2px 0 #C55A4E; }
+#child-add-modal{ position:absolute; inset:0; z-index:90; background:rgba(44,24,16,.65); display:none; align-items:center; justify-content:center; }
+#child-add-modal.show{ display:flex; animation:fadein .25s; }
+.cam-card{ background:linear-gradient(170deg,var(--parent-card) 0%,var(--parchment) 100%); border-radius:24px; padding:28px 24px 24px; max-width:320px; width:88%; text-align:center; box-shadow:0 12px 40px rgba(44,24,16,.25); animation:pinSlideUp .3s cubic-bezier(.2,.9,.3,1.2); position:relative; }
+.cam-card h3{ font-size:18px; font-weight:900; color:var(--parent-ink); margin-bottom:16px; }
+.cam-avatar-pick{ display:flex; flex-wrap:wrap; gap:10px; justify-content:center; margin-top:12px; }
+.cam-avatar-pick .opt{ width:48px; height:48px; border-radius:50%; background:#F3F4F6; display:flex; align-items:center; justify-content:center; font-size:24px; cursor:pointer; border:2px solid transparent; transition:all .15s; }
+.cam-avatar-pick .opt.sel{ border-color:var(--parent-brand); background:#EEF2FF; }
 </style>
 </head>
 <body>
@@ -661,6 +683,29 @@ html,body{ height:100%; font-family:"PingFang SC","Microsoft YaHei",system-ui,sa
       </div>
     </div>
 
+    <!-- Parent Account -->
+    <div class="p-page" id="p-account">
+      <div class="p-header"><h1>我的</h1><span class="sub">账号与孩子管理</span></div>
+
+      <div class="p-card p-account-info">
+        <div class="p-info-row"><span class="p-info-label">手机号</span><span class="p-info-val" id="accPhone">---</span></div>
+        <div class="p-info-row"><span class="p-info-label">家长名</span><span class="p-info-val" id="accName">---</span></div>
+      </div>
+
+      <div class="p-card">
+        <h3>👶 孩子管理</h3>
+        <div id="childList"></div>
+        <button class="btn-p outline" onclick="showAddChildModal()">➕ 添加孩子</button>
+      </div>
+
+      <div class="p-card">
+        <h3>🔒 PIN 管理</h3>
+        <button class="btn-p outline" id="pinManageBtn" onclick="showPinChangeModal()">设置家长密码</button>
+      </div>
+
+      <button class="btn-p red" onclick="logout()">退出登录</button>
+    </div>
+
   </div><!-- /parent-screens -->
 
   <!-- ===== KID NAV ===== -->
@@ -679,6 +724,7 @@ html,body{ height:100%; font-family:"PingFang SC","Microsoft YaHei",system-ui,sa
     <div class="tab" onclick="goParentTab(this,'p-create')"><span class="em">✍️</span>发布</div>
     <div class="tab" onclick="goParentTab(this,'p-rewards')"><span class="em"><img src="assets/ui/treasure.png" class="em" alt=""></span>奖励</div>
     <div class="tab" onclick="goParentTab(this,'p-report')"><span class="em">📊</span>报告</div>
+    <div class="tab" onclick="goParentTab(this,'p-account')"><span class="em">⚙️</span>我的</div>
   </div>
 
   <!-- ===== TASK MODAL (kid) ===== -->
@@ -733,6 +779,28 @@ html,body{ height:100%; font-family:"PingFang SC","Microsoft YaHei",system-ui,sa
         <div class="pin-lock-emoji">🔒</div>
         <div class="pin-lock-text" id="pinLockText">已锁定，请稍候...</div>
       </div>
+    </div>
+  </div>
+
+  <!-- ===== CHILD ADD MODAL ===== -->
+  <div id="child-add-modal">
+    <div class="cam-card">
+      <button class="pin-close" onclick="closeAddChildModal()">✕</button>
+      <h3>➕ 添加孩子</h3>
+      <div class="field"><label>孩子名字</label><input id="cam-name" placeholder="输入孩子名字" style="text-align:center"></div>
+      <div class="field"><label>选择头像</label>
+        <div class="cam-avatar-pick" id="camAvatars">
+          <div class="opt sel" data-a="🦊" onclick="pickCamAvatar(this)">🦊</div>
+          <div class="opt" data-a="🐯" onclick="pickCamAvatar(this)">🐯</div>
+          <div class="opt" data-a="🐰" onclick="pickCamAvatar(this)">🐰</div>
+          <div class="opt" data-a="🐱" onclick="pickCamAvatar(this)">🐱</div>
+          <div class="opt" data-a="🐶" onclick="pickCamAvatar(this)">🐶</div>
+          <div class="opt" data-a="🐼" onclick="pickCamAvatar(this)">🐼</div>
+          <div class="opt" data-a="🐨" onclick="pickCamAvatar(this)">🐨</div>
+          <div class="opt" data-a="🐸" onclick="pickCamAvatar(this)">🐸</div>
+        </div>
+      </div>
+      <button class="btn-p" onclick="submitAddChild()">确认添加</button>
     </div>
   </div>
 
@@ -1314,7 +1382,7 @@ function renderShop(){ var l=document.getElementById('shopList'); l.innerHTML=''
 function buyItem(it,btn){ sfxTap(); saveRedeem(it.id,it.cost).then(function(ok){ if(ok){ btn.disabled=true; btn.textContent='已兑换'; sfxSuccess(); var c=document.getElementById('combo'); c.textContent='兑换成功!'; c.classList.remove('show'); void c.offsetWidth; c.classList.add('show'); renderShop(); } }); }
 
 // ====== PARENT: render all ======
-function renderParent(){ renderPending(); renderApproved(); renderParentStats(); renderTemplates(); renderRewardList(); renderReport(); }
+function renderParent(){ renderPending(); renderApproved(); renderParentStats(); renderTemplates(); renderRewardList(); renderReport(); loadAccountInfo(); }
 
 function renderParentStats(){
   animNum('p-done',S.approvedTasks.length);
@@ -1472,6 +1540,7 @@ function showPinVerify(){
 function closePin(){
   document.getElementById('pin-overlay').classList.remove('show');
   PIN.digits=''; PIN.firstPin=''; PIN.mode=null;
+  PIN_CHANGE.step=0; PIN_CHANGE.oldPin=''; PIN_CHANGE.newPin='';
   if(PIN.lockTimer){ clearInterval(PIN.lockTimer); PIN.lockTimer=null; }
 }
 
@@ -1557,6 +1626,53 @@ function submitPin(){
       }
     }).catch(function(){ showPinError('网络错误，请重试'); });
   }
+  else if(PIN.mode==='change-old'){
+    api('/api/auth/verify-pin',{method:'POST',body:{pin:PIN.digits}}).then(function(r){
+      if(r.code===0){
+        PIN_CHANGE.oldPin=PIN.digits; PIN.digits='';
+        PIN.mode='change-new';
+        document.getElementById('pin-title').textContent='设置新密码';
+        document.getElementById('pin-sub').textContent='请输入新的4位家长密码';
+        document.getElementById('pinError').textContent='';
+        updatePinDots(); sfxTap();
+      } else {
+        showPinError('旧密码错误');
+        PIN.digits=''; updatePinDots();
+      }
+    }).catch(function(){ showPinError('网络错误，请重试'); });
+  }
+  else if(PIN.mode==='change-new'){
+    PIN_CHANGE.newPin=PIN.digits; PIN.digits='';
+    PIN.mode='change-confirm';
+    document.getElementById('pin-title').textContent='确认新密码';
+    document.getElementById('pin-sub').textContent='请再次输入新的4位密码';
+    document.getElementById('pinError').textContent='';
+    updatePinDots(); sfxTap();
+  }
+  else if(PIN.mode==='change-confirm'){
+    if(PIN.digits!==PIN_CHANGE.newPin){
+      showPinError('两次密码不一致');
+      PIN.mode='change-new'; PIN.digits=''; PIN_CHANGE.newPin='';
+      document.getElementById('pin-title').textContent='设置新密码';
+      document.getElementById('pin-sub').textContent='请输入新的4位家长密码';
+      updatePinDots(); return;
+    }
+    api('/api/auth/update-pin',{method:'POST',body:{oldPin:PIN_CHANGE.oldPin,newPin:PIN.digits}}).then(function(r){
+      if(r.code===0){
+        document.getElementById('pin-overlay').classList.remove('show');
+        PIN.mode=null; PIN.digits='';
+        PIN_CHANGE.step=0; PIN_CHANGE.oldPin=''; PIN_CHANGE.newPin='';
+        toast('密码修改成功'); sfxSuccess();
+      } else {
+        showPinError(r.msg||'修改失败');
+        PIN.mode='change-old'; PIN.digits='';
+        PIN_CHANGE.oldPin=''; PIN_CHANGE.newPin='';
+        document.getElementById('pin-title').textContent='输入旧密码';
+        document.getElementById('pin-sub').textContent='请输入当前的4位家长密码';
+        updatePinDots();
+      }
+    }).catch(function(){ showPinError('网络错误，请重试'); });
+  }
 }
 
 function showPinError(msg){
@@ -1592,6 +1708,162 @@ function lockPin(){
       document.getElementById('pinLockText').textContent='已锁定，请 '+left+' 秒后重试';
     }
   },500);
+}
+
+// ====== PARENT: Account ======
+S.children = []; S.currentChildId = null; S.parentPhone = ''; S.parentName = '';
+S.camAvatar = '🦊';
+var PIN_CHANGE = { step:0, oldPin:'', newPin:'' };
+
+function loadAccountInfo(){
+  api('/api/user/profile').then(function(r){
+    if(r.code===0){
+      S.parentPhone = r.data.phone || '';
+      S.parentName = r.data.parentName || '';
+      document.getElementById('accPhone').textContent = S.parentPhone || '---';
+      document.getElementById('accName').textContent = S.parentName || '---';
+    }
+  });
+  api('/api/children').then(function(r){
+    if(r.code===0){
+      S.children = (r.data && r.data.children) || [];
+      if(S.children.length>0 && !S.currentChildId) S.currentChildId = (r.data && r.data.activeChild != null) ? r.data.activeChild : (S.children[0] ? S.children[0].id : null);
+            renderChildList();
+    }
+  });
+  api('/api/auth/pin-status').then(function(r){
+    var btn = document.getElementById('pinManageBtn');
+    if(btn){
+      if(r.code===0 && r.data && r.data.hasPin){
+        btn.textContent = '修改家长密码';
+      } else {
+        btn.textContent = '设置家长密码';
+      }
+    }
+  });
+}
+
+function renderChildList(){
+  var l = document.getElementById('childList');
+  if(!l) return;
+  if(!S.children || S.children.length===0){
+    l.innerHTML = '<div style="font-size:13px;color:#999;text-align:center;padding:14px">还没有绑定孩子</div>';
+    return;
+  }
+  l.innerHTML = '';
+  S.children.forEach(function(c){
+    var d = document.createElement('div');
+    d.className = 'child-item' + (c.id===S.currentChildId?' active':'');
+    d.innerHTML = '<div class="child-avatar">'+iconTag(c.avatar||c.emoji||'🦊')+'</div><div class="child-info"><b>'+c.name+'</b><span>Lv.'+(c.level||1)+'</span></div>';
+    if(S.children.length>1){
+      var del = document.createElement('button');
+      del.className = 'child-delete';
+      del.textContent = '✕';
+      del.onclick = function(e){ e.stopPropagation(); deleteChild(c.id); };
+      d.appendChild(del);
+    }
+    d.onclick = function(){ switchChild(c.id); };
+    l.appendChild(d);
+  });
+}
+
+function switchChild(id){
+  if(id===S.currentChildId) return;
+  sfxTap();
+  api('/api/children/switch',{method:'POST',body:{childId:id}}).then(function(r){
+    if(r.code===0){
+      S.currentChildId = id;
+      renderChildList();
+      renderAll();
+      toast('已切换');
+    } else {
+      toast(r.msg||'切换失败');
+    }
+  });
+}
+
+function addChild(name, avatar){
+  api('/api/children',{method:'POST',body:{name:name,avatar:avatar}}).then(function(r){
+    if(r.code===0){
+      var newChild = {id: r.data.id, name: name, avatar: S.camAvatar, coins:0, gems:0, level:1};
+      S.children.push(newChild);
+      if(!S.currentChildId) S.currentChildId = r.data.id;
+      loadAccountInfo();
+      toast('添加成功');
+      sfxSuccess();
+    } else {
+      toast(r.msg||'添加失败');
+    }
+  });
+}
+
+function deleteChild(id){
+  if(!S.children || S.children.length<=1){ toast('至少保留一个孩子'); return; }
+  sfxTap();
+  api('/api/children/'+id,{method:'DELETE'}).then(function(r){
+    if(r.code===0){
+      S.children = S.children.filter(function(c){ return c.id!==id; });
+      if(S.currentChildId===id) S.currentChildId = S.children[0] ? S.children[0].id : null;
+      renderChildList();
+      toast('已删除');
+    } else {
+      toast(r.msg||'删除失败');
+    }
+  });
+}
+
+function showAddChildModal(){
+  S.camAvatar = '🦊';
+  document.getElementById('cam-name').value = '';
+  document.querySelectorAll('#camAvatars .opt').forEach(function(o){ o.classList.remove('sel'); });
+  var first = document.querySelector('#camAvatars .opt');
+  if(first) first.classList.add('sel');
+  document.getElementById('child-add-modal').classList.add('show');
+  sfxTap();
+}
+
+function closeAddChildModal(){
+  document.getElementById('child-add-modal').classList.remove('show');
+}
+
+function pickCamAvatar(el){
+  document.querySelectorAll('#camAvatars .opt').forEach(function(o){ o.classList.remove('sel'); });
+  el.classList.add('sel');
+  S.camAvatar = el.dataset.a;
+  sfxTap();
+}
+
+function submitAddChild(){
+  var name = document.getElementById('cam-name').value.trim();
+  if(!name){ toast('请输入孩子名字'); return; }
+  sfxTap();
+  addChild(name, S.camAvatar);
+  closeAddChildModal();
+}
+
+function showPinChangeModal(){
+  api('/api/auth/pin-status').then(function(r){
+    if(r.code===0 && r.data && r.data.hasPin){
+      PIN_CHANGE.step=0; PIN_CHANGE.oldPin=''; PIN_CHANGE.newPin='';
+      PIN.mode='change-old'; PIN.digits='';
+      document.getElementById('pin-title').textContent='输入旧密码';
+      document.getElementById('pin-sub').textContent='请输入当前的4位家长密码';
+      document.getElementById('pinError').textContent='';
+      document.getElementById('pinLock').classList.remove('show');
+      if(PIN.lockTimer){ clearInterval(PIN.lockTimer); PIN.lockTimer=null; }
+      updatePinDots(); renderPinPad();
+      document.getElementById('pin-overlay').classList.add('show');
+      sfxTap();
+    } else {
+      showPinSetup();
+    }
+  }).catch(function(){ showPinSetup(); });
+}
+
+function logout(){
+  sfxTap();
+  localStorage.removeItem('token');
+  window.location.href = '/adventure-kingdom/';
 }
 </script>
 </body>
