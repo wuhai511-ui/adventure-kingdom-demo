@@ -1,0 +1,1508 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>冒险王国 v2 - 任务积分奖励游戏化教育</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+:root{
+  --gold:#D4A843; --gold-d:#B8861F; --gold-light:#F0D68A; --gem:#7CE3FF; --gem-d:#3CB8E0;
+  --grass:#7FD66E; --sky1:#C4DEF0; --sky2:#E8F2F8;
+  --ink:#2C1810; --ink-soft:#5C3D2E; --paper:#FBF7F0; --parchment:#F2E8D5;
+  --red:#E07B6E; --purple:#9B8EC4; --green:#6B8F5E; --moss:#8BA87E;
+  --bark:#3D2B1F; --wood:#5C3D2E;
+  --parent-bg:#F5F4F0; --parent-card:#FDFCF8; --parent-ink:#2C1810; --parent-sub:#8B7E6E; --parent-brand:#8B6F47; --parent-brand-d:#6B5232; --parent-line:#E8E0D0;
+}
+html,body{ height:100%; font-family:"PingFang SC","Microsoft YaHei",system-ui,sans-serif; background:#1f1a15; color:var(--ink); overflow:hidden; user-select:none; }
+#phone{ position:relative; width:100%; max-width:430px; height:100%; max-height:932px; margin:0 auto; background:var(--paper); overflow:hidden; box-shadow:0 0 60px rgba(44,24,16,.5); }
+
+/* ===== Role Mode Toggle ===== */
+.mode-banner{ position:absolute; top:0; left:0; right:0; z-index:55; height:34px; display:flex; align-items:center; justify-content:center; gap:6px; font-size:12px; font-weight:700; color:var(--paper); transition:background .3s; }
+.mode-banner.kid{ background:linear-gradient(90deg,var(--wood),var(--bark)); }
+.mode-banner.parent{ background:linear-gradient(90deg,var(--parent-brand-d),var(--wood)); }
+.mode-banner .swap{ margin-left:6px; padding:3px 10px; background:rgba(255,255,255,.25); border-radius:10px; font-size:11px; }
+
+/* ===== Kid HUD ===== */
+#hud{ position:absolute; top:34px; left:0; right:0; z-index:30; padding:10px 14px 8px; background:linear-gradient(180deg,rgba(45,28,18,.9),rgba(45,28,18,0)); color:#fff; display:flex; align-items:center; gap:10px; }
+.avatar{ width:42px; height:42px; border-radius:50%; background:linear-gradient(135deg,var(--gold-light),var(--gold)); display:flex; align-items:center; justify-content:center; font-size:24px; border:2px solid rgba(255,255,255,.6); box-shadow:0 2px 8px rgba(0,0,0,.3); flex:none; }
+.hero-info{ flex:1; min-width:0; }
+.hero-name{ font-size:14px; font-weight:800; text-shadow:0 1px 2px rgba(0,0,0,.5); }
+.hero-lv{ font-size:11px; opacity:.9; text-shadow:0 1px 2px rgba(0,0,0,.5); }
+.bar{ height:7px; background:rgba(255,255,255,.25); border-radius:5px; margin-top:3px; overflow:hidden; }
+.bar > i{ display:block; height:100%; width:40%; background:linear-gradient(90deg,#7CE3FF,#5FC97A); border-radius:5px; transition:width .6s; }
+.wallets{ display:flex; gap:5px; flex:none; }
+.coin-pill,.gem-pill{ display:flex; align-items:center; gap:3px; background:rgba(255,255,255,.18); padding:3px 8px 3px 5px; border-radius:20px; font-size:13px; font-weight:900; backdrop-filter:blur(4px); }
+.coin-pill{ color:var(--gold); } .gem-pill{ color:var(--gem); }
+.coin-pill .em,.gem-pill .em{ font-size:15px; }
+.em img, img.em { width:1em; height:1em; display:inline-block; vertical-align:middle; object-fit:contain; }
+
+
+/* ===== Screens ===== */
+.screen{ position:absolute; inset:0; overflow-y:auto; -webkit-overflow-scrolling:touch; display:none; }
+.screen.active{ display:block; }
+
+/* Kid Map → 关卡+周历+今日任务 */
+#map-screen{ padding-top:90px; padding-bottom:74px; background:linear-gradient(180deg,var(--sky2) 0%,var(--paper) 35%,var(--parchment) 100%); min-height:100%; overflow-y:auto; -webkit-overflow-scrolling:touch; }
+.cloud{ position:absolute; color:#fff; opacity:.7; font-size:30px; animation:drift linear infinite; pointer-events:none; filter:drop-shadow(0 2px 4px rgba(0,0,0,.04)); }
+@keyframes drift{ from{ transform:translateX(-60px);} to{ transform:translateX(460px);} }
+.season-tag{ position:absolute; top:78px; left:14px; z-index:8; background:rgba(251,247,240,.95); color:var(--ink); padding:5px 12px; border-radius:14px; font-size:12px; font-weight:800; box-shadow:0 2px 8px rgba(44,24,16,.08); border:1px solid rgba(212,168,67,.12); }
+
+/* 关卡进度条 */
+.level-bar{ display:flex; gap:8px; padding:0 4px 14px; }
+.level-node{ flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; cursor:pointer; }
+.level-node .lic{ width:48px; height:48px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:24px; border:3px solid rgba(212,168,67,.2); box-shadow:0 3px 10px rgba(0,0,0,.06); background:rgba(242,232,213,.8); opacity:.5; transition:all .2s; }
+.level-node.current .lic{ opacity:1; transform:scale(1.1); border-color:var(--gold); box-shadow:0 3px 14px rgba(212,168,67,.25); }
+.level-node.done .lic{ opacity:1; }
+.level-node.done .lic::after{ content:"✓"; position:absolute; }
+.level-node .ln{ font-size:10px; font-weight:800; color:var(--ink-soft); text-align:center; }
+.level-node .lp{ width:100%; height:5px; background:rgba(44,24,16,.06); border-radius:3px; overflow:hidden; margin-top:2px; }
+.level-node .lp > i{ display:block; height:100%; border-radius:3px; transition:width .6s; }
+
+/* 当前关卡卡片 */
+.level-card{ background:linear-gradient(170deg,var(--paper) 0%,var(--parchment) 100%); border-radius:22px; padding:18px; margin:0 4px 14px; box-shadow:0 6px 0 rgba(44,24,16,.05),0 0 0 1px rgba(212,168,67,.08); }
+.level-card .lh{ display:flex; align-items:center; gap:10px; margin-bottom:12px; }
+.level-card .lh .lic{ width:46px; height:46px; border-radius:16px; display:flex; align-items:center; justify-content:center; font-size:26px; box-shadow:inset 0 1px 0 rgba(255,255,255,.5); }
+.level-card .lh .lt b{ font-size:16px; font-weight:900; display:block; color:var(--ink); } .level-card .lh .lt span{ font-size:12px; color:var(--ink-soft); }
+.level-card .lh .lv{ margin-left:auto; text-align:right; } .level-card .lh .lv b{ font-size:22px; font-weight:900; color:var(--gold-d); } .level-card .lh .lv span{ display:block; font-size:10px; color:var(--ink-soft); }
+
+/* 周历7天 */
+.week-cal{ display:flex; gap:5px; margin-bottom:6px; }
+.day-cell{ flex:1; display:flex; flex-direction:column; align-items:center; gap:3px; padding:10px 2px; border-radius:14px; background:rgba(242,232,213,.5); cursor:pointer; transition:all .15s; }
+.day-cell.past{ background:rgba(107,143,94,.1); } .day-cell.today{ background:linear-gradient(160deg,var(--gold-light),var(--gold)); box-shadow:0 4px 14px rgba(212,168,67,.35); transform:scale(1.08); }
+.day-cell.future{ opacity:.35; } .day-cell.sel{ outline:2px solid var(--purple); }
+.day-cell .dn{ font-size:11px; font-weight:800; color:var(--ink-soft); }
+.day-cell .dc{ font-size:14px; font-weight:900; color:var(--ink); } .day-cell.today .dc{ color:#FFFEF9; }
+.day-cell .ds{ font-size:9px; color:var(--ink-soft); } .day-cell.today .ds{ color:rgba(255,255,255,.75); }
+.day-cell .dn{ font-size:11px; font-weight:800; color:var(--ink); }
+.day-cell .dc{ font-size:13px; font-weight:900; }
+.day-cell .ds{ font-size:9px; color:#666; } .day-cell.today .ds{ color:#7A5A12; font-weight:800; }
+
+/* 今日任务列表 */
+.today-header{ display:flex; align-items:center; justify-content:space-between; padding:0 4px 10px; }
+.today-header h3{ font-size:16px; font-weight:900; color:var(--ink); } .today-header .cnt{ font-size:13px; font-weight:800; color:var(--gold-d); background:rgba(240,214,138,.3); padding:4px 12px; border-radius:12px; }
+
+/* ===== 大卡片轮播 ===== */
+.carousel-wrap{ position:relative; padding:0 0 8px; }
+.carousel{ display:flex; overflow-x:auto; scroll-snap-type:x mandatory; -webkit-overflow-scrolling:touch; scrollbar-width:none; scroll-behavior:smooth; padding:0 16px 4px; }
+.carousel::-webkit-scrollbar{ display:none; }
+.task-card-big{ scroll-snap-align:center; flex:none; width:88%; margin-right:14px; background:linear-gradient(170deg,var(--paper) 0%,var(--parchment) 100%); border-radius:24px; overflow:hidden; box-shadow:0 8px 0 rgba(44,24,16,.05),0 0 0 1px rgba(212,168,67,.1),0 12px 30px rgba(44,24,16,.1); position:relative; }
+.task-card-big.done{ opacity:.55; }
+.task-card-big.done::after{ content:"已完成"; position:absolute; top:14px; right:14px; background:var(--green); color:#fff; font-size:12px; font-weight:700; padding:5px 12px; border-radius:12px; z-index:3; }
+
+/* 卡片顶部大图动画区 */
+.tc-anim{ height:200px; display:flex; align-items:center; justify-content:center; font-size:110px; position:relative; overflow:hidden; }
+.tc-anim .bg{ position:absolute; inset:0; opacity:.2; }
+.tc-anim .emoji{ position:relative; z-index:2; filter:drop-shadow(0 6px 8px rgba(44,24,16,.15)); }
+.tc-anim .emoji img{ width:160px; height:160px; object-fit:contain; display:block; margin:auto; }
+/* 各任务动画 */
+.anim-bed .emoji{ animation:bedBounce 1.8s ease-in-out infinite; }
+@keyframes bedBounce{ 0%,100%{transform:translateY(0) rotate(0);} 30%{transform:translateY(-12px) rotate(-3deg);} 60%{transform:translateY(4px) rotate(2deg);} }
+.anim-book .emoji{ animation:bookFlip 2.2s ease-in-out infinite; }
+@keyframes bookFlip{ 0%,100%{transform:rotateY(0);} 50%{transform:rotateY(25deg);} }
+.anim-tooth .emoji{ animation:toothBrush 1s ease-in-out infinite; }
+@keyframes toothBrush{ 0%,100%{transform:translateX(-8px) rotate(-8deg);} 50%{transform:translateX(8px) rotate(8deg);} }
+.anim-run .emoji{ animation:runShake .5s ease-in-out infinite; }
+@keyframes runShake{ 0%,100%{transform:translateX(0) translateY(0);} 25%{transform:translateX(-3px) translateY(-4px);} 75%{transform:translateX(3px) translateY(2px);} }
+.anim-write .emoji{ animation:writeWiggle 1.6s ease-in-out infinite; }
+@keyframes writeWiggle{ 0%,100%{transform:rotate(-5deg);} 50%{transform:rotate(8deg);} }
+.anim-cook .emoji{ animation:cookToss 1.4s ease-in-out infinite; }
+@keyframes cookToss{ 0%,100%{transform:translateY(0) rotate(0);} 40%{transform:translateY(-10px) rotate(-12deg);} 70%{transform:translateY(2px) rotate(6deg);} }
+.anim-bag .emoji{ animation:bagPack 1.8s ease-in-out infinite; }
+@keyframes bagPack{ 0%,100%{transform:scale(1);} 50%{transform:scale(1.08) rotate(-2deg);} }
+.anim-trash .emoji{ animation:trashSwing 1.5s ease-in-out infinite; }
+@keyframes trashSwing{ 0%,100%{transform:rotate(-10deg);} 50%{transform:rotate(10deg);} }
+.anim-sweep .emoji{ animation:sweepMove 1.2s ease-in-out infinite; }
+@keyframes sweepMove{ 0%,100%{transform:translateX(-10px) rotate(-15deg);} 50%{transform:translateX(10px) rotate(15deg);} }
+.anim-pet .emoji{ animation:petHop 1s ease-in-out infinite; }
+@keyframes petHop{ 0%,100%{transform:translateY(0);} 50%{transform:translateY(-14px) rotate(5deg);} }
+/* 学龄前任务动画 */
+.anim-dress .emoji{ animation:dressUp 1.5s ease-in-out infinite; }
+@keyframes dressUp{ 0%,100%{transform:translateY(0) scale(1);} 50%{transform:translateY(-6px) scale(1.06);} }
+.anim-shoe .emoji{ animation:shoeStep .7s ease-in-out infinite; }
+@keyframes shoeStep{ 0%,100%{transform:translateY(0) rotate(0);} 50%{transform:translateY(-8px) rotate(-6deg);} }
+.anim-eat .emoji{ animation:eatNibble 2s ease-in-out infinite; }
+@keyframes eatNibble{ 0%,100%{transform:rotate(0);} 25%{transform:rotate(-5deg);} 75%{transform:rotate(5deg);} }
+.anim-teddy .emoji{ animation:teddyWobble 1.8s ease-in-out infinite; }
+@keyframes teddyWobble{ 0%,100%{transform:rotate(-6deg);} 50%{transform:rotate(6deg) translateY(-4px);} }
+.anim-toilet .emoji{ animation:toiletBounce 2s ease-in-out infinite; }
+@keyframes toiletBounce{ 0%,100%{transform:translateY(0);} 30%{transform:translateY(-5px) scale(1.05);} 60%{transform:translateY(2px);} }
+.anim-wash .emoji{ animation:washRub 1s ease-in-out infinite; }
+@keyframes washRub{ 0%,100%{transform:rotate(-8deg);} 50%{transform:rotate(8deg);} }
+.anim-carry .emoji{ animation:carrySwing 1.5s ease-in-out infinite; }
+@keyframes carrySwing{ 0%,100%{transform:rotate(-10deg);} 50%{transform:rotate(10deg) translateY(-3px);} }
+.anim-wave .emoji{ animation:waveHi .9s ease-in-out infinite; }
+@keyframes waveHi{ 0%,100%{transform:rotate(0) translateX(0);} 25%{transform:rotate(-15deg) translateX(-6px);} 75%{transform:rotate(15deg) translateX(6px);} }
+.anim-read .emoji{ animation:readOpen 2.2s ease-in-out infinite; }
+@keyframes readOpen{ 0%,100%{transform:rotateY(0) scale(1);} 50%{transform:rotateY(20deg) scale(1.04);} }
+.anim-draw .emoji{ animation:drawScribble 1.6s ease-in-out infinite; }
+@keyframes drawScribble{ 0%,100%{transform:rotate(-8deg) translateY(0);} 50%{transform:rotate(8deg) translateY(-4px);} }
+.anim-sing .emoji{ animation:singNote 1.3s ease-in-out infinite; }
+@keyframes singNote{ 0%,100%{transform:scale(1) translateY(0);} 50%{transform:scale(1.08) translateY(-6px);} }
+.anim-smile .emoji{ animation:smileGlow 2.5s ease-in-out infinite; }
+@keyframes smileGlow{ 0%,100%{transform:scale(1);} 50%{transform:scale(1.1);} }
+
+/* 卡片信息区 */
+.tc-body{ padding:16px 18px 18px; }
+.tc-pinyin{ font-size:13px; color:#9B7B3F; font-weight:600; letter-spacing:1px; margin-bottom:2px; line-height:1.5; }
+.tc-name{ font-size:24px; font-weight:900; color:var(--ink); margin-bottom:6px; }
+.tc-desc{ font-size:14px; color:#888; line-height:1.5; margin-bottom:14px; }
+.tc-foot{ display:flex; align-items:center; justify-content:space-between; }
+.tc-pts{ display:flex; align-items:center; gap:6px; }
+.tc-pts .coin{ font-size:28px; } .tc-pts .v{ font-size:26px; font-weight:900; color:var(--gold-d); } .tc-pts .u{ font-size:12px; color:#999; }
+.tc-btn{ padding:14px 28px; border:none; border-radius:16px; background:linear-gradient(160deg,var(--gold),#B8861F); color:#FFFEF9; font-weight:700; font-size:16px; box-shadow:0 5px 0 #8B6914,0 4px 14px rgba(184,134,31,.2); cursor:pointer; display:flex; align-items:center; gap:6px; letter-spacing:1px; }
+.tc-btn:active{ transform:translateY(3px); box-shadow:0 2px 0 #8B6914; }
+.tc-btn.disabled{ background:#D5C8B0; box-shadow:none; color:#999; }
+.tc-locked{ padding:40px 18px; text-align:center; background:#F5F0E0; }
+.tc-locked .em{ font-size:50px; margin-bottom:8px; } .tc-locked p{ font-size:14px; color:#999; }
+
+/* 轮播指示器 */
+.carousel-dots{ display:flex; gap:6px; justify-content:center; padding:6px 0 2px; }
+.carousel-dots .dot{ width:7px; height:7px; border-radius:50%; background:#D5C8B0; transition:all .2s; }
+.carousel-dots .dot.active{ width:22px; border-radius:4px; background:var(--gold-d); }
+
+.castle{ font-size:36px; text-align:center; padding:8px 0; }
+
+/* Daily Treasure Box (新增 - 日常钩子) */
+#treasure-box{ position:absolute; right:14px; top:78px; z-index:8; width:62px; height:62px; cursor:pointer; }
+#treasure-box .box-ic{ width:62px; height:62px; display:flex; align-items:center; justify-content:center; font-size:40px; filter:drop-shadow(0 3px 4px rgba(0,0,0,.3)); animation:boxbob 1.6s ease-in-out infinite; }
+@keyframes boxbob{ 0%,100%{transform:translateY(0) rotate(-4deg);} 50%{transform:translateY(-6px) rotate(4deg);} }
+#treasure-box.opened .box-ic{ animation:none; opacity:.4; filter:grayscale(.5); }
+#treasure-box .dot{ position:absolute; top:-2px; right:2px; width:18px; height:18px; background:var(--red); border:2px solid #fff; border-radius:50%; font-size:11px; font-weight:900; color:#fff; display:flex; align-items:center; justify-content:center; }
+#treasure-box .lbl{ position:absolute; bottom:-16px; left:50%; transform:translateX(-50%); white-space:nowrap; background:#fff; color:var(--ink); font-size:10px; font-weight:800; padding:2px 6px; border-radius:8px; box-shadow:0 1px 3px rgba(0,0,0,.2); }
+
+/* ===== Bottom Nav (Kid) ===== */
+#nav-kid{ position:absolute; bottom:0; left:0; right:0; z-index:40; height:64px; background:linear-gradient(180deg,var(--bark),rgba(45,28,18,.96)); display:flex; border-top:1px solid rgba(212,168,67,.15); }
+.tab{ flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:1px; color:rgba(255,255,255,.45); font-size:10px; font-weight:700; }
+.tab .em{ font-size:20px; }
+.tab.active{ color:var(--gold-light); text-shadow:0 0 10px rgba(240,214,138,.4); }
+
+/* ===== Generic Kid panels ===== */
+.page{ padding:100px 16px 80px; min-height:100%; }
+.page h2{ font-size:22px; font-weight:900; margin-bottom:14px; }
+.card{ background:var(--paper); border-radius:18px; padding:16px; box-shadow:0 6px 0 rgba(0,0,0,.06); margin-bottom:14px; }
+.wallet-big{ text-align:center; padding:24px 16px; background:linear-gradient(145deg,#FFF3C4,#FFD66B); border-radius:20px; margin-bottom:16px; }
+.wallet-big .em{ font-size:50px; } .wallet-big .num{ font-size:40px; font-weight:900; color:#7A5A12; } .wallet-big .lbl{ font-size:13px; color:#7A5A12; opacity:.8; }
+.row{ display:flex; align-items:center; gap:12px; padding:12px 0; border-bottom:1px dashed rgba(58,42,26,.15); }
+.row:last-child{ border:0; }
+.row .em{ font-size:28px; } .row .t{ flex:1; } .row .t b{ font-size:15px; } .row .t span{ display:block; font-size:12px; color:#999; } .row .v{ font-size:18px; font-weight:900; color:var(--gold-d); }
+
+/* Savings jar */
+.jar-wrap{ text-align:center; }
+.jar{ position:relative; width:150px; height:190px; margin:10px auto; }
+.jar-glass{ position:absolute; inset:0; border:5px solid rgba(255,255,255,.6); border-radius:18px 18px 24px 24px; background:rgba(255,255,255,.15); overflow:hidden; }
+.jar-liquid{ position:absolute; bottom:0; left:0; right:0; height:30%; background:linear-gradient(180deg,#7CE3FF,#3CB8E0); transition:height 1s; }
+.jar-liquid::before{ content:""; position:absolute; top:-8px; left:0; right:0; height:16px; background:#7CE3FF; border-radius:50%; animation:wave 2.5s ease-in-out infinite; }
+@keyframes wave{ 0%,100%{ transform:translateX(-8px) scaleY(1);} 50%{ transform:translateX(8px) scaleY(.7);} }
+.jar-cap{ position:absolute; top:-14px; left:50%; transform:translateX(-50%); width:76px; height:18px; background:#8A6A3A; border-radius:6px; }
+.goal{ font-size:14px; color:#666; margin-top:6px; } .goal b{ color:var(--gem-d); }
+.progress-t{ font-size:28px; font-weight:900; color:var(--gem-d); }
+.btn{ display:block; width:100%; padding:14px; border:none; border-radius:14px; font-size:16px; font-weight:900; color:#fff; background:linear-gradient(145deg,var(--gem-d),#2AA8D8); box-shadow:0 5px 0 #1A88B8; cursor:pointer; margin-top:14px; transition:transform .1s; }
+.btn:active{ transform:translateY(3px); box-shadow:0 2px 0 #1A88B8; }
+.btn.gold{ background:linear-gradient(145deg,var(--gold-d),#C98A1C); box-shadow:0 5px 0 #A8761A; }
+.btn.gold:active{ box-shadow:0 2px 0 #A8761A; }
+.btn.gray{ background:#ccc; box-shadow:0 5px 0 #aaa; }
+.btn.gray:active{ box-shadow:0 2px 0 #aaa; }
+
+/* Badges */
+.badge-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:12px; }
+.badge{ aspect-ratio:1; border-radius:16px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; background:#F0E8D8; border:3px dashed rgba(58,42,26,.2); }
+.badge .em{ font-size:32px; filter:grayscale(1); opacity:.4; } .badge span{ font-size:10px; color:#aaa; text-align:center; font-weight:700; }
+.badge.unlocked{ background:linear-gradient(145deg,#FFF3C4,#FFD66B); border:3px solid #fff; box-shadow:0 4px 8px rgba(0,0,0,.12); }
+.badge.unlocked .em{ filter:none; opacity:1; animation:pop .5s; } .badge.unlocked span{ color:#7A5A12; }
+@keyframes pop{ 0%{transform:scale(0);} 70%{transform:scale(1.25);} 100%{transform:scale(1);} }
+
+/* Shop */
+.shop-item{ display:flex; align-items:center; gap:12px; background:var(--paper); border-radius:16px; padding:12px; margin-bottom:10px; box-shadow:0 4px 0 rgba(0,0,0,.06); }
+.shop-item .em{ font-size:36px; flex:none; }
+.shop-item .t{ flex:1; } .shop-item .t b{ font-size:15px; } .shop-item .t span{ font-size:12px; color:#999; }
+.shop-item .buy{ padding:8px 14px; border:none; border-radius:12px; background:linear-gradient(145deg,var(--gold-d),#C98A1C); color:#fff; font-weight:900; font-size:13px; box-shadow:0 3px 0 #A8761A; }
+.shop-item .buy:active{ transform:translateY(2px); box-shadow:0 1px 0 #A8761A; }
+.shop-item .buy:disabled{ background:#ccc; box-shadow:none; }
+
+/* Pets (新增) */
+.pet-card{ display:flex; align-items:center; gap:12px; background:var(--paper); border-radius:16px; padding:14px; margin-bottom:10px; box-shadow:0 4px 0 rgba(0,0,0,.06); }
+.pet-card .em{ font-size:42px; flex:none; }
+.pet-card .info{ flex:1; } .pet-card .info b{ font-size:15px; } .pet-card .info span{ display:block; font-size:12px; color:#999; margin-top:2px; }
+.pet-card .lv{ text-align:right; } .pet-card .lv b{ font-size:18px; color:var(--purple); } .pet-card .lv span{ display:block; font-size:10px; color:#999; }
+.pet-bar{ height:6px; background:#eee; border-radius:4px; margin-top:6px; overflow:hidden; } .pet-bar > i{ display:block; height:100%; background:var(--purple); border-radius:4px; }
+.pet-egg{ display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; aspect-ratio:1; background:linear-gradient(145deg,#F0E8D8,#E5D8C0); border-radius:16px; border:3px dashed rgba(58,42,26,.2); cursor:pointer; }
+.pet-egg .em{ font-size:40px; } .pet-egg span{ font-size:10px; color:#999; font-weight:700; text-align:center; }
+
+/* ===== Task modal ===== */
+#task-modal{ position:absolute; inset:0; z-index:60; background:rgba(0,0,0,.5); display:none; align-items:flex-end; }
+#task-modal.show{ display:flex; animation:fadein .25s; }
+@keyframes fadein{ from{opacity:0;} to{opacity:1;} }
+.sheet{ width:100%; background:var(--paper); border-radius:24px 24px 0 0; padding:24px 20px 28px; animation:slideup .3s cubic-bezier(.2,.9,.3,1.2); max-height:90%; overflow-y:auto; }
+@keyframes slideup{ from{transform:translateY(100%);} to{transform:translateY(0);} }
+.sheet .ic{ font-size:48px; text-align:center; }
+.sheet h3{ text-align:center; font-size:20px; font-weight:900; margin:8px 0 4px; }
+.sheet .desc{ text-align:center; font-size:14px; color:#777; margin-bottom:8px; }
+.sheet .reward-line{ text-align:center; font-size:15px; margin-bottom:18px; } .sheet .reward-line b{ color:var(--gold-d); font-size:18px; }
+.evid{ background:#FFF0D0; border-radius:14px; padding:14px; margin-bottom:16px; }
+.evid label{ font-size:13px; font-weight:700; color:#7A5A12; }
+.photo-btn{ display:flex; align-items:center; justify-content:center; gap:8px; width:100%; padding:16px; margin-top:8px; border:3px dashed var(--gold-d); border-radius:14px; background:#fff; font-size:15px; font-weight:700; color:var(--gold-d); }
+.photo-btn .em{ font-size:22px; } .photo-btn.taken{ background:#F0F8E8; border-color:var(--green); color:var(--green); }
+
+/* ===== CELEBRATION ===== */
+#celebrate{ position:absolute; inset:0; z-index:80; pointer-events:none; display:none; }
+#celebrate.show{ display:block; }
+.burst{ position:absolute; left:50%; top:42%; width:0; height:0; }
+.particle{ position:absolute; width:14px; height:14px; border-radius:50%; }
+.star{ position:absolute; font-size:22px; }
+.coin-fly{ position:absolute; font-size:24px; }
+#flash{ position:absolute; inset:0; background:#fff; opacity:0; }
+#celebrate.show #flash{ animation:flash .5s; }
+@keyframes flash{ 0%{opacity:.85;} 100%{opacity:0;} }
+.banner{ position:absolute; left:50%; top:30%; transform:translate(-50%,-50%) scale(0); text-align:center; color:#fff; text-shadow:0 3px 0 rgba(0,0,0,.3); }
+#celebrate.show .banner{ animation:bannerpop .6s cubic-bezier(.2,.9,.3,1.4) forwards; }
+@keyframes bannerpop{ 0%{transform:translate(-50%,-50%) scale(0) rotate(-12deg);} 60%{transform:translate(-50%,-50%) scale(1.15) rotate(4deg);} 100%{transform:translate(-50%,-50%) scale(1) rotate(0);} }
+.banner .big{ font-size:40px; font-weight:900; } .banner .sub{ font-size:18px; margin-top:6px; }
+.king{ position:absolute; left:50%; bottom:18%; transform:translateX(-50%) translateY(20px); opacity:0; text-align:center; background:rgba(255,255,255,.96); border-radius:18px; padding:14px 22px; box-shadow:0 8px 24px rgba(0,0,0,.3); }
+#celebrate.show .king{ animation:kingup .5s .55s forwards; }
+@keyframes kingup{ to{ opacity:1; transform:translateX(-50%) translateY(0);} }
+.king .face{ font-size:36px; } .king .word{ font-size:15px; font-weight:800; color:var(--ink); margin-top:4px; } .king .word b{ color:var(--gold-d); }
+#combo{ position:absolute; top:90px; left:50%; transform:translateX(-50%); z-index:70; font-size:28px; font-weight:900; color:#fff; text-shadow:0 2px 0 var(--red); opacity:0; pointer-events:none; }
+#combo.show{ animation:combopop .8s; }
+@keyframes combopop{ 0%{opacity:0; transform:translateX(-50%) scale(.5);} 30%{opacity:1; transform:translateX(-50%) scale(1.2);} 100%{opacity:0; transform:translateX(-50%) scale(1) translateY(-20px);} }
+#toast{ position:absolute; bottom:80px; left:50%; transform:translateX(-50%) translateY(20px); z-index:90; background:rgba(58,42,26,.92); color:#fff; padding:11px 18px; border-radius:14px; font-size:13px; font-weight:700; opacity:0; transition:.3s; pointer-events:none; max-width:300px; text-align:center; }
+#toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
+
+/* ===== PARENT MODE ===== */
+#parent-screens{ display:none; }
+.p-mode #kid-screens{ display:none; }
+.p-mode #parent-screens{ display:block; }
+.p-mode #nav-kid{ display:none; }
+.p-mode #nav-parent{ display:flex; }
+.p-mode #hud{ display:none; }
+.p-mode #treasure-box{ display:none; }
+.p-mode .screen{ background:var(--parent-bg); color:var(--parent-ink); }
+
+/* Parent Nav */
+#nav-parent{ position:absolute; bottom:0; left:0; right:0; z-index:40; height:64px; background:linear-gradient(180deg,var(--paper),var(--parchment)); display:none; border-top:1px solid var(--parent-line); }
+#nav-parent .tab{ color:var(--parent-sub); } #nav-parent .tab.active{ color:var(--gold-d); }
+
+/* Parent pages */
+.p-page{ position:absolute; inset:0; padding:100px 16px 78px; display:none; overflow-y:auto; -webkit-overflow-scrolling:touch; background:var(--parent-bg); color:var(--parent-ink); }
+.p-page.active{ display:block; }
+.p-header{ position:absolute; top:34px; left:0; right:0; z-index:20; background:linear-gradient(180deg,var(--paper) 0%,var(--parchment) 100%); padding:14px 16px; border-bottom:1px solid var(--parent-line); display:flex; align-items:center; justify-content:space-between; }
+.p-header h1{ font-size:18px; font-weight:900; color:var(--parent-ink); }
+.p-header .sub{ font-size:12px; color:var(--parent-sub); }
+.p-card{ background:var(--parent-card); border-radius:18px; padding:18px; box-shadow:0 2px 8px rgba(44,24,16,.04); margin-bottom:12px; border:1px solid var(--parent-line); }
+.p-card h3{ font-size:15px; font-weight:800; margin-bottom:10px; color:var(--parent-ink); }
+.stat-grid{ display:grid; grid-template-columns:repeat(2,1fr); gap:10px; margin-bottom:12px; }
+.stat{ background:var(--parent-card); border-radius:14px; padding:16px; border:1px solid var(--parent-line); text-align:center; box-shadow:0 1px 4px rgba(44,24,16,.03); }
+.stat .n{ font-size:26px; font-weight:900; color:var(--gold-d); } .stat .l{ font-size:11px; color:var(--parent-sub); margin-top:2px; }
+.task-row{ display:flex; align-items:center; gap:12px; padding:14px 0; border-bottom:1px solid var(--parent-line); }
+.task-row:last-child{ border:0; }
+.task-row .ic{ width:40px; height:40px; border-radius:10px; background:#F3F4F6; display:flex; align-items:center; justify-content:center; font-size:22px; flex:none; }
+.task-row .info{ flex:1; } .task-row .info b{ font-size:14px; display:block; } .task-row .info span{ font-size:12px; color:var(--parent-sub); }
+.task-row .pts{ font-size:13px; font-weight:800; color:var(--gold-d); }
+.task-row .act{ padding:6px 12px; border-radius:10px; font-size:12px; font-weight:800; border:none; cursor:pointer; }
+.task-row .act.approve{ background:#D1FAE5; color:#065F46; } .task-row .act.reject{ background:#FEE2E2; color:#991B1B; }
+.task-row .act.pending{ background:#FEF3C7; color:#92400E; }
+.fab{ position:absolute; bottom:78px; right:16px; z-index:30; width:54px; height:54px; border-radius:50%; background:var(--parent-brand); color:#fff; font-size:28px; border:none; box-shadow:0 6px 16px rgba(99,102,241,.4); cursor:pointer; }
+
+/* Parent form (UGC template editor) */
+.field{ margin-bottom:14px; }
+.field label{ display:block; font-size:13px; font-weight:700; color:var(--parent-ink); margin-bottom:6px; }
+.field input,.field select,.field textarea{ width:100%; padding:11px 12px; border:1px solid var(--parent-line); border-radius:10px; font-size:14px; font-family:inherit; background:#fff; color:var(--parent-ink); }
+.field textarea{ min-height:70px; resize:vertical; }
+.icon-picker{ display:flex; flex-wrap:wrap; gap:8px; }
+.icon-picker .opt{ width:44px; height:44px; border-radius:10px; background:#F3F4F6; display:flex; align-items:center; justify-content:center; font-size:22px; cursor:pointer; border:2px solid transparent; }
+.icon-picker .opt.sel{ border-color:var(--parent-brand); background:#EEF2FF; }
+.chip-row{ display:flex; flex-wrap:wrap; gap:8px; }
+.chip{ padding:7px 14px; border-radius:20px; background:#F3F4F6; font-size:13px; font-weight:700; color:var(--parent-sub); cursor:pointer; }
+.chip.sel{ background:var(--parent-brand); color:#fff; }
+.btn-p{ display:block; width:100%; padding:13px; border:none; border-radius:12px; font-size:15px; font-weight:800; color:#fff; background:var(--parent-brand); box-shadow:0 4px 0 var(--parent-brand-d); cursor:pointer; margin-top:10px; }
+.btn-p:active{ transform:translateY(2px); box-shadow:0 2px 0 var(--parent-brand-d); }
+.btn-p.outline{ background:#fff; color:var(--parent-brand); border:1px solid var(--parent-brand); box-shadow:none; }
+
+/* Parent reward editor */
+.reward-item{ display:flex; align-items:center; gap:12px; padding:12px; background:#fff; border:1px solid var(--parent-line); border-radius:12px; margin-bottom:10px; }
+.reward-item .em{ font-size:30px; flex:none; } .reward-item .info{ flex:1; } .reward-item .info b{ font-size:14px; } .reward-item .info span{ font-size:12px; color:var(--parent-sub); } .reward-item .del{ color:#EF4444; font-size:20px; cursor:pointer; padding:6px; }
+
+/* Parent report */
+.report-section{ margin-bottom:18px; }
+.report-section h3{ font-size:14px; font-weight:800; color:var(--parent-ink); margin-bottom:8px; }
+.bar-chart{ display:flex; align-items:flex-end; gap:8px; height:120px; padding:10px 0; }
+.bar-chart .b{ flex:1; background:linear-gradient(180deg,var(--parent-brand),#A5B4FC); border-radius:6px 6px 0 0; position:relative; min-height:6px; }
+.bar-chart .b span{ position:absolute; bottom:-20px; left:50%; transform:translateX(-50%); font-size:10px; color:var(--parent-sub); }
+.bar-chart .b em{ position:absolute; top:-18px; left:50%; transform:translateX(-50%); font-size:11px; font-weight:800; color:var(--parent-brand); font-style:normal; }
+.insight{ background:#EEF2FF; border-radius:12px; padding:14px; font-size:13px; line-height:1.6; color:var(--parent-ink); }
+.insight b{ color:var(--parent-brand); }
+
+/* ===== ONBOARDING (3-min contract) ===== */
+#onboard{ position:absolute; inset:0; z-index:100; background:linear-gradient(180deg,#8FD3FF,#C9EEFF); display:flex; align-items:center; justify-content:center; overflow-y:auto; -webkit-overflow-scrolling:touch; padding:20px 0; }
+#onboard .box{ background:var(--paper); border-radius:24px; padding:24px 20px; max-width:340px; width:88%; text-align:center; margin:auto; }
+#onboard .box h1{ font-size:24px; margin-bottom:6px; } #onboard .box p{ font-size:13px; color:#777; margin-bottom:16px; }
+.role-row{ display:flex; gap:10px; margin-bottom:14px; }
+.role-row .role{ flex:1; padding:10px; border:3px solid transparent; border-radius:14px; background:#F0E8D8; font-size:28px; text-align:center; cursor:pointer; }
+.role-row .role.sel{ border-color:var(--gold-d); background:#FFF3C4; transform:scale(1.05); }
+.role-row .role span{ display:block; font-size:11px; font-weight:700; margin-top:2px; }
+.step-dots{ display:flex; gap:6px; justify-content:center; margin:14px 0; }
+.step-dots .d{ width:8px; height:8px; border-radius:50%; background:#ddd; } .step-dots .d.active{ background:var(--gold-d); width:24px; border-radius:4px; }
+
+/* Parent gate (切回家长模式的手势密码) */
+#parent-gate{ position:absolute; inset:0; z-index:70; background:rgba(0,0,0,.7); display:none; align-items:center; justify-content:center; }
+#parent-gate.show{ display:flex; }
+#parent-gate .box{ background:#fff; border-radius:20px; padding:24px; text-align:center; max-width:300px; }
+#parent-gate h3{ font-size:16px; margin-bottom:6px; } #parent-gate p{ font-size:13px; color:#888; margin-bottom:16px; }
+.gate-dots{ display:flex; gap:10px; justify-content:center; margin:14px 0; }
+.gate-dots .gd{ width:16px; height:16px; border-radius:50%; background:#ddd; border:3px solid #ddd; }
+.gate-dots .gd.filled{ background:var(--parent-brand); border-color:var(--parent-brand); }
+.gate-pad{ display:grid; grid-template-columns:repeat(3,1fr); gap:10px; max-width:240px; margin:0 auto; }
+.gate-pad .gp{ aspect-ratio:1; border-radius:50%; background:#F3F4F6; font-size:22px; font-weight:800; border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; }
+.gate-pad .gp:active{ background:var(--parent-brand); color:#fff; }
+
+/* Template browser (家长选模板) */
+.tmpl-cat{ display:flex; gap:8px; overflow-x:auto; padding:8px 0 12px; }
+.tmpl-cat .c{ white-space:nowrap; padding:6px 14px; border-radius:20px; background:#F3F4F6; font-size:13px; font-weight:700; color:var(--parent-sub); cursor:pointer; }
+.tmpl-cat .c.sel{ background:var(--parent-brand); color:#fff; }
+.tmpl-item{ display:flex; align-items:center; gap:12px; padding:12px; background:#fff; border:1px solid var(--parent-line); border-radius:12px; margin-bottom:8px; cursor:pointer; }
+.tmpl-item .em{ font-size:26px; flex:none; } .tmpl-item .info{ flex:1; } .tmpl-item .info b{ font-size:14px; } .tmpl-item .info span{ font-size:11px; color:var(--parent-sub); }
+.tmpl-item .add{ color:var(--parent-brand); font-size:22px; font-weight:800; }
+.tmpl-item.added{ opacity:.5; } .tmpl-item.added .add{ color:#9CA3AF; }
+
+/* ===== PIN LOCK ===== */
+#pin-overlay{ position:absolute; inset:0; z-index:90; background:rgba(44,24,16,.65); display:none; align-items:center; justify-content:center; }
+#pin-overlay.show{ display:flex; animation:fadein .25s; }
+.pin-card{ background:linear-gradient(170deg,var(--parent-card) 0%,var(--parchment) 100%); border-radius:24px; padding:28px 24px 24px; max-width:320px; width:88%; text-align:center; box-shadow:0 12px 40px rgba(44,24,16,.25),0 0 0 1px rgba(212,168,67,.08); position:relative; animation:pinSlideUp .3s cubic-bezier(.2,.9,.3,1.2); }
+@keyframes pinSlideUp{ from{transform:translateY(40px);opacity:0;} to{transform:translateY(0);opacity:1;} }
+.pin-close{ position:absolute; top:10px; right:12px; width:32px; height:32px; border:none; border-radius:50%; background:rgba(44,24,16,.06); font-size:16px; color:var(--parent-sub); cursor:pointer; display:flex; align-items:center; justify-content:center; }
+.pin-close:active{ background:rgba(44,24,16,.16); }
+#pin-title{ font-size:18px; font-weight:900; color:var(--parent-ink); margin-bottom:4px; }
+#pin-sub{ font-size:13px; color:var(--parent-sub); margin-bottom:20px; line-height:1.5; }
+.pin-dots{ display:flex; gap:14px; justify-content:center; margin-bottom:14px; }
+.pin-dots .pd{ width:18px; height:18px; border-radius:50%; background:rgba(139,126,110,.12); border:2px solid rgba(139,126,110,.18); transition:all .2s; }
+.pin-dots .pd.filled{ background:var(--parent-brand); border-color:var(--parent-brand); box-shadow:0 0 0 4px rgba(139,111,71,.15); }
+.pin-dots .pd.error{ background:var(--red); border-color:var(--red); animation:pinShake .4s; }
+@keyframes pinShake{ 0%,100%{transform:translateX(0);} 25%{transform:translateX(-6px);} 75%{transform:translateX(6px);} }
+.pin-error{ font-size:12px; font-weight:700; color:var(--red); min-height:18px; margin-bottom:8px; transition:opacity .2s; }
+.pin-pad{ display:grid; grid-template-columns:repeat(3,1fr); gap:10px; max-width:240px; margin:0 auto 16px; }
+.pin-pad .pp{ aspect-ratio:1; border-radius:50%; background:rgba(139,126,110,.08); font-size:22px; font-weight:800; border:none; color:var(--parent-ink); cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all .12s; }
+.pin-pad .pp:active{ background:var(--parent-brand); color:#fff; transform:scale(.94); }
+.pin-pad .pp.del{ font-size:18px; color:var(--parent-sub); }
+.pin-pad .pp.del:active{ background:rgba(224,123,110,.25); color:var(--red); }
+.pin-pad .pp.empty{ visibility:hidden; pointer-events:none; }
+.pin-cancel{ display:block; width:100%; padding:12px; border:1px solid var(--parent-line); border-radius:12px; background:#fff; font-size:14px; font-weight:700; color:var(--parent-sub); cursor:pointer; }
+.pin-cancel:active{ background:#F3F4F6; }
+.pin-lock{ display:none; text-align:center; padding:20px 0 0; }
+.pin-lock.show{ display:block; }
+.pin-lock-emoji{ font-size:40px; margin-bottom:8px; animation:pinLockPulse 1.5s ease-in-out infinite; }
+@keyframes pinLockPulse{ 0%,100%{transform:scale(1);opacity:1;} 50%{transform:scale(1.1);opacity:.6;} }
+.pin-lock-text{ font-size:14px; font-weight:800; color:var(--red); }
+</style>
+</head>
+<body>
+<div id="phone">
+
+  <!-- ===== ONBOARDING (3-min contract, 仅首次显示) ===== -->
+  <div id="onboard" style="display:none">
+    <div class="box" id="ob-step1">
+      <h1>欢迎来到冒险王国!</h1>
+      <p>家长和宝贝一起，3分钟开启任务冒险</p>
+      <div style="font-size:14px;font-weight:800;margin-bottom:8px">第一步：宝贝选个小勇士形象</div>
+      <div class="role-row">
+        <div class="role sel" data-r="🦊" onclick="pickRole(this)"><div>🦊</div><span>小狐狸</span></div>
+        <div class="role" data-r="🐯" onclick="pickRole(this)"><div>🐯</div><span>小老虎</span></div>
+        <div class="role" data-r="🐰" onclick="pickRole(this)"><div>🐰</div><span>小兔子</span></div>
+      </div>
+      <div style="font-size:14px;font-weight:800;margin-bottom:8px">宝贝叫什么名字？</div>
+      <input id="ob-name" placeholder="输入宝贝名字" style="width:100%;padding:11px;border:1px solid #ddd;border-radius:10px;font-size:15px;margin-bottom:14px;text-align:center" value="小勇士">
+      <div class="step-dots"><div class="d active"></div><div class="d"></div><div class="d"></div></div>
+      <button class="btn gold" onclick="obNext1()">下一步 →</button>
+    </div>
+
+    <div class="box" id="ob-step2" style="display:none">
+      <h1>第一个任务</h1>
+      <p>家长来发布宝贝的第一个冒险任务吧</p>
+      <div class="field"><label>任务名称</label><input id="ob-task" value="整理床铺" style="width:100%;padding:11px;border:1px solid #ddd;border-radius:10px;font-size:15px"></div>
+      <div class="field"><label>奖励金币</label><input id="ob-pts" type="number" value="5" style="width:100%;padding:11px;border:1px solid #ddd;border-radius:10px;font-size:15px"></div>
+      <div class="step-dots"><div class="d"></div><div class="d active"></div><div class="d"></div></div>
+      <button class="btn gold" onclick="obNext2()">下一步 →</button>
+    </div>
+
+    <div class="box" id="ob-step3" style="display:none">
+      <h1>第一个奖励</h1>
+      <p>设一个宝贝攒金币能换的奖励</p>
+      <div class="field"><label>奖励名称</label><input id="ob-reward" value="看电视30分钟" style="width:100%;padding:11px;border:1px solid #ddd;border-radius:10px;font-size:15px"></div>
+      <div class="field"><label>需要金币</label><input id="ob-rpts" type="number" value="20" style="width:100%;padding:11px;border:1px solid #ddd;border-radius:10px;font-size:15px"></div>
+      <div class="step-dots"><div class="d"></div><div class="d"></div><div class="d active"></div></div>
+      <button class="btn gold" onclick="obFinish()">击掌出发! ✋</button>
+    </div>
+  </div>
+
+  <!-- ===== MODE BANNER (同端切换) ===== -->
+  <div class="mode-banner kid" id="modeBanner" onclick="checkPinStatus()">
+    <span id="modeText">👶 孩子模式</span>
+    <span class="swap">切换 ›</span>
+  </div>
+
+  <!-- ===== KID HUD ===== -->
+  <div id="hud">
+    <div class="avatar" id="avatar">🦊</div>
+    <div class="hero-info">
+      <div class="hero-name" id="heroName">小勇士</div>
+      <div class="hero-lv">Lv.3 探险家 · <span id="xpText">40</span>/100</div>
+      <div class="bar"><i id="xpbar"></i></div>
+    </div>
+    <div class="wallets">
+      <div class="coin-pill"><span class="em">🪙</span><span id="coinN">0</span></div>
+      <div class="gem-pill"><span class="em">💎</span><span id="gemN">0</span></div>
+    </div>
+  </div>
+
+  <!-- ===== Daily Treasure Box (新增) ===== -->
+  <div id="treasure-box" onclick="openTreasure()">
+    <div class="box-ic">🎁</div>
+    <div class="dot">1</div>
+    <div class="lbl">每日宝箱</div>
+  </div>
+
+  <!-- ===== KID SCREENS ===== -->
+  <div id="kid-screens">
+
+    <!-- Map -->
+    <div class="screen active" id="map-screen">
+      <div class="season-tag">🌸 春日探索季</div>
+      <div class="cloud" style="top:100px;animation-duration:22s">☁️</div>
+      <div class="cloud" style="top:150px;animation-duration:30s;animation-delay:-8s;opacity:.4">☁️</div>
+      <div id="map-content"></div>
+    </div>
+
+    <!-- Wallet -->
+    <div class="screen page" id="wallet-screen" style="background:linear-gradient(180deg,#FFF8EC,#FFE8C0)">
+      <h2>我的金币 💰</h2>
+      <div class="wallet-big">
+        <div class="em">🪙</div>
+        <div class="num" id="walletCoin">0</div>
+        <div class="lbl">可用金币 · 可去商城兑换奖励</div>
+      </div>
+      <div class="card">
+        <div class="row"><div class="em">📥</div><div class="t"><b>今日获得</b><span>完成任务赚到的金币</span></div><div class="v" id="todayGain">+0</div></div>
+        <div class="row"><div class="em">🏦</div><div class="t"><b>已存入储蓄罐</b><span>为梦想攒的大奖励</span></div><div class="v" id="savedN">0</div></div>
+        <div class="row"><div class="em">🛒</div><div class="t"><b>已兑换奖励</b><span>花掉的金币</span></div><div class="v" id="spentN">0</div></div>
+      </div>
+    </div>
+
+    <!-- Savings -->
+    <div class="screen page" id="save-screen" style="background:linear-gradient(180deg,#C9EEFF,#E8F8FF)">
+      <h2>梦想储蓄罐 🏦</h2>
+      <div class="jar-wrap">
+        <div class="jar">
+          <div class="jar-cap"></div>
+          <div class="jar-glass"><div class="jar-liquid" id="jarLiquid"></div></div>
+        </div>
+        <div class="progress-t"><span id="saveHave">0</span> / <span id="saveGoal">200</span> 💎</div>
+        <div class="goal">目标奖励：<b id="goalName">周末去游乐园 🎢</b></div>
+      </div>
+      <button class="btn" onclick="depositGem()">存入 10 💎 到储蓄罐</button>
+      <div class="card" style="margin-top:16px">
+        <div style="font-size:14px;font-weight:700;margin-bottom:8px">💡 小勇士悄悄话</div>
+        <div style="font-size:13px;color:#666;line-height:1.6">忍住不马上花掉、攒起来换大奖励的小朋友，长大后更厉害哦！这就是「延迟满足」的秘密武器 ✨</div>
+      </div>
+    </div>
+
+    <!-- Pets (新增) -->
+    <div class="screen page" id="pet-screen" style="background:linear-gradient(180deg,#F3E8FF,#FFF)">
+      <h2>我的宠物 🐾</h2>
+      <p style="font-size:13px;color:#999;margin-bottom:14px">做任务赚金币，孵化并养成你的小伙伴！</p>
+      <div id="petList"></div>
+      <div class="card" style="margin-top:8px">
+        <div style="font-size:14px;font-weight:700;margin-bottom:6px">🥚 未孵化宠物蛋</div>
+        <div id="eggList" style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px"></div>
+      </div>
+    </div>
+
+    <!-- Badges -->
+    <div class="screen page" id="badge-screen" style="background:linear-gradient(180deg,#FFF8EC,#FFE8C0)">
+      <h2>徽章墙 🏅</h2>
+      <p style="font-size:13px;color:#999;margin-bottom:16px">完成任务可以解锁闪闪发光的徽章！</p>
+      <div class="badge-grid" id="badgeGrid"></div>
+    </div>
+
+    <!-- Shop -->
+    <div class="screen page" id="shop-screen" style="background:linear-gradient(180deg,#FFF3E0,#FFE0B2)">
+      <h2>奖励商城 🎁</h2>
+      <p style="font-size:13px;color:#999;margin-bottom:16px">用金币兑换爸爸妈妈准备的奖励吧！</p>
+      <div id="shopList"></div>
+    </div>
+
+  </div><!-- /kid-screens -->
+
+  <!-- ===== PARENT SCREENS ===== -->
+  <div id="parent-screens">
+
+    <!-- Parent Home (任务管理+审核) -->
+    <div class="p-page active" id="p-home">
+      <div class="p-header"><h1>任务管理</h1><span class="sub">审核宝贝完成情况</span></div>
+      <div class="stat-grid">
+        <div class="stat"><div class="n" id="p-done">0</div><div class="l">今日完成</div></div>
+        <div class="stat"><div class="n" id="p-pending">0</div><div class="l">待审核</div></div>
+        <div class="stat"><div class="n" id="p-coin">0</div><div class="l">宝贝金币</div></div>
+        <div class="stat"><div class="n" id="p-streak">0</div><div class="l">连续天数</div></div>
+      </div>
+      <div class="p-card">
+        <h3>📋 待审核任务</h3>
+        <div id="pendingList"><div style="font-size:13px;color:#999;text-align:center;padding:14px">暂无待审核任务</div></div>
+      </div>
+      <div class="p-card">
+        <h3>✅ 今日已通过</h3>
+        <div id="approvedList"><div style="font-size:13px;color:#999;text-align:center;padding:14px">暂无</div></div>
+      </div>
+      <button class="fab" onclick="goParentTab(this,'p-create')">+</button>
+    </div>
+
+    <!-- Parent Create (UGC template editor + 模板库) -->
+    <div class="p-page" id="p-create">
+      <div class="p-header"><h1>发布任务</h1><span class="sub">选模板或自己创建</span></div>
+
+      <div class="tmpl-cat" id="tmplCat">
+        <div class="c sel" data-cat="all" onclick="pickCat(this)">全部</div>
+        <div class="c" data-cat="学龄前" onclick="pickCat(this)">学龄前</div>
+        <div class="c" data-cat="家务" onclick="pickCat(this)">家务</div>
+        <div class="c" data-cat="学习" onclick="pickCat(this)">学习</div>
+        <div class="c" data-cat="运动" onclick="pickCat(this)">运动</div>
+        <div class="c" data-cat="习惯" onclick="pickCat(this)">习惯</div>
+        <div class="c" data-cat="品德" onclick="pickCat(this)">品德</div>
+      </div>
+      <div style="font-size:13px;font-weight:800;color:var(--parent-ink);margin:8px 0">📚 从任务模板库选择</div>
+      <div id="tmplList"></div>
+
+      <div style="font-size:13px;font-weight:800;color:var(--parent-ink);margin:18px 0 8px">✍️ 或自己创建一个任务</div>
+      <div class="p-card">
+        <div class="field"><label>任务图标</label>
+          <div class="icon-picker" id="icPicker">
+            <div class="opt sel" data-i="📚" onclick="pickIcon(this)">📚</div>
+            <div class="opt" data-i="🛏️" onclick="pickIcon(this)">🛏️</div>
+            <div class="opt" data-i="🏃" onclick="pickIcon(this)">🏃</div>
+            <div class="opt" data-i="🦷" onclick="pickIcon(this)">🦷</div>
+            <div class="opt" data-i="📝" onclick="pickIcon(this)">📝</div>
+            <div class="opt" data-i="🍳" onclick="pickIcon(this)">🍳</div>
+            <div class="opt" data-i="🥗" onclick="pickIcon(this)">🥗</div>
+            <div class="opt" data-i="🧹" onclick="pickIcon(this)">🧹</div>
+            <div class="opt" data-i="🐶" onclick="pickIcon(this)">🐶</div>
+            <div class="opt" data-i="🦴" onclick="pickIcon(this)">🦴</div>
+          </div>
+        </div>
+        <div class="field"><label>任务名称</label><input id="f-name" placeholder="如：阅读30分钟"></div>
+        <div class="field"><label>给宝贝的话（描述）</label><textarea id="f-desc" placeholder="读完一本书或一个故事"></textarea></div>
+        <div class="field"><label>奖励金币</label><input id="f-pts" type="number" value="10"></div>
+        <div class="field"><label>审核方式</label>
+          <div class="chip-row" id="reviewChips">
+            <div class="chip sel" data-r="photo" onclick="pickReview(this)">📷 拍照证明</div>
+            <div class="chip" data-r="confirm" onclick="pickReview(this)">👨 家长确认</div>
+            <div class="chip" data-r="auto" onclick="pickReview(this)">⚡ 自动通过</div>
+          </div>
+        </div>
+        <div class="field"><label>频率</label>
+          <div class="chip-row" id="freqChips">
+            <div class="chip sel" data-f="daily" onclick="pickFreq(this)">每日</div>
+            <div class="chip" data-r="weekly" onclick="pickFreq(this)">每周</div>
+            <div class="chip" data-f="once" onclick="pickFreq(this)">一次性</div>
+          </div>
+        </div>
+        <button class="btn-p" onclick="createTask()">发布任务</button>
+      </div>
+    </div>
+
+    <!-- Parent Rewards -->
+    <div class="p-page" id="p-rewards">
+      <div class="p-header"><h1>奖励设置</h1><span class="sub">宝贝用金币兑换这些</span></div>
+      <div id="rewardList"></div>
+      <div class="p-card" style="margin-top:8px">
+        <h3>➕ 添加新奖励</h3>
+        <div class="field"><label>奖励图标</label>
+          <div class="icon-picker" id="rwdIcPicker">
+            <div class="opt sel" data-i="📺" onclick="pickRwdIcon(this)">📺</div>
+            <div class="opt" data-i="🎮" onclick="pickRwdIcon(this)">🎮</div>
+            <div class="opt" data-i="🍦" onclick="pickRwdIcon(this)">🍦</div>
+            <div class="opt" data-i="🧸" onclick="pickRwdIcon(this)">🧸</div>
+            <div class="opt" data-i="🎬" onclick="pickRwdIcon(this)">🎬</div>
+            <div class="opt" data-i="🎢" onclick="pickRwdIcon(this)">🎢</div>
+            <div class="opt" data-i="📚" onclick="pickRwdIcon(this)">📚</div>
+            <div class="opt" data-i="🍕" onclick="pickRwdIcon(this)">🍕</div>
+          </div>
+        </div>
+        <div class="field"><label>奖励名称</label><input id="r-name" placeholder="如：周末去公园"></div>
+        <div class="field"><label>需要金币</label><input id="r-pts" type="number" value="50"></div>
+        <button class="btn-p" onclick="addReward()">添加奖励</button>
+      </div>
+    </div>
+
+    <!-- Parent Report -->
+    <div class="p-page" id="p-report">
+      <div class="p-header"><h1>成长报告</h1><span class="sub">本周宝贝表现</span></div>
+      <div class="p-card">
+        <h3>📊 本周每日完成数</h3>
+        <div class="bar-chart" id="weekChart"></div>
+      </div>
+      <div class="report-section">
+        <h3>🔍 教育洞察</h3>
+        <div class="insight" id="insight">本周宝贝完成 <b id="i-total">0</b> 个任务，坚持 <b id="i-streak">0</b> 天。<span id="i-advice">继续鼓励宝贝，保持每日小目标的习惯养成节奏！</span></div>
+      </div>
+      <div class="p-card">
+        <h3>🏆 本周获得的徽章</h3>
+        <div id="weekBadges" style="display:flex;gap:10px;flex-wrap:wrap"></div>
+      </div>
+      <div class="p-card">
+        <h3>📈 成长趋势</h3>
+        <div id="trendText" style="font-size:13px;line-height:1.7;color:var(--parent-ink)">宝贝在「家务」「学习」方面表现稳定，建议下周适当增加「运动」类任务，培养全面发展 💪</div>
+      </div>
+    </div>
+
+  </div><!-- /parent-screens -->
+
+  <!-- ===== KID NAV ===== -->
+  <div id="nav-kid">
+    <div class="tab active" onclick="goKidTab(this,'map-screen')"><span class="em"><img src="assets/ui/level.png" class="em" alt=""></span>冒险</div>
+    <div class="tab" onclick="goKidTab(this,'wallet-screen')"><span class="em"><img src="assets/ui/coin.png" class="em" alt=""></span>钱包</div>
+    <div class="tab" onclick="goKidTab(this,'save-screen')"><span class="em"><img src="assets/ui/piggybank.png" class="em" alt=""></span>储蓄罐</div>
+    <div class="tab" onclick="goKidTab(this,'pet-screen')"><span class="em"><img src="assets/badges/pawprint.png" class="em" alt=""></span>宠物</div>
+    <div class="tab" onclick="goKidTab(this,'badge-screen')"><span class="em"><img src="assets/badges/trophy.png" class="em" alt=""></span>徽章</div>
+    <div class="tab" onclick="goKidTab(this,'shop-screen')"><span class="em"><img src="assets/ui/treasure.png" class="em" alt=""></span>商城</div>
+  </div>
+
+  <!-- ===== PARENT NAV ===== -->
+  <div id="nav-parent">
+    <div class="tab active" onclick="goParentTab(this,'p-home')"><span class="em">📋</span>任务</div>
+    <div class="tab" onclick="goParentTab(this,'p-create')"><span class="em">✍️</span>发布</div>
+    <div class="tab" onclick="goParentTab(this,'p-rewards')"><span class="em"><img src="assets/ui/treasure.png" class="em" alt=""></span>奖励</div>
+    <div class="tab" onclick="goParentTab(this,'p-report')"><span class="em">📊</span>报告</div>
+  </div>
+
+  <!-- ===== TASK MODAL (kid) ===== -->
+  <div id="task-modal">
+    <div class="sheet">
+      <div class="ic" id="mIcon">📚</div>
+      <h3 id="mTitle">阅读30分钟</h3>
+      <div class="desc" id="mDesc">读完一本书或一个故事</div>
+      <div class="reward-line">完成奖励 <b id="mReward">+15 🪙</b></div>
+      <div class="evid" id="mEvid">
+        <label>📝 给国王看看你完成的证据（拍张照片）</label>
+        <button class="photo-btn" id="photoBtn" onclick="takePhoto()"><span class="em">📷</span>点击拍照证明</button>
+      </div>
+      <button class="btn gold" id="doneBtn" onclick="completeTask()">我完成啦! 🎉</button>
+    </div>
+  </div>
+
+  <!-- ===== CELEBRATION ===== -->
+  <div id="celebrate">
+    <div id="flash"></div>
+    <div class="burst" id="burst"></div>
+    <div class="banner"><div class="big" id="celBig">任务完成!</div><div class="sub" id="celSub">+15 🪙 飞入钱包</div></div>
+    <div class="king"><div class="face">🤴</div><div class="word" id="kingWord">真棒！<b>国王爸爸</b>为你骄傲！</div></div>
+  </div>
+  <div id="combo"></div>
+  <div id="toast"></div>
+
+  <!-- ===== PARENT GATE (手势密码) ===== -->
+  <div id="parent-gate">
+    <div class="box">
+      <h3>🔒 切换到家长模式</h3>
+      <p>请输入4位密码（防止宝贝误切）</p>
+      <div class="gate-dots" id="gateDots"><div class="gd"></div><div class="gd"></div><div class="gd"></div><div class="gd"></div></div>
+      <div class="gate-pad" id="gatePad"></div>
+      <button class="btn-p outline" style="margin-top:14px" onclick="closeGate()">取消</button>
+    </div>
+  </div>
+
+  <!-- ===== PIN LOCK (家长密码) ===== -->
+  <div id="pin-overlay">
+    <div class="pin-card">
+      <button class="pin-close" onclick="closePin()">✕</button>
+      <h3 id="pin-title">设置家长密码</h3>
+      <p id="pin-sub">请设置4位数字密码，防止宝贝误切模式</p>
+      <div class="pin-dots" id="pinDots">
+        <div class="pd"></div><div class="pd"></div><div class="pd"></div><div class="pd"></div>
+      </div>
+      <div class="pin-error" id="pinError"></div>
+      <div class="pin-pad" id="pinPad"></div>
+      <button class="pin-cancel" onclick="closePin()">取消</button>
+      <div class="pin-lock" id="pinLock">
+        <div class="pin-lock-emoji">🔒</div>
+        <div class="pin-lock-text" id="pinLockText">已锁定，请稍候...</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ===== Emoji-to-Image Maps =====
+var _IM={"🦊":"characters/fox.png","🐯":"characters/tiger.png","🐰":"characters/bunny.png","🛏️":"tasks/bed.png","📚":"tasks/reading.png","🦷":"tasks/brush.png","🏃":"tasks/sport.png","📝":"tasks/homework.png","🍳":"tasks/cooking.png","🥗":"tasks/backpack.png","🦴":"tasks/trash.png","🧹":"tasks/desk.png","🐶":"tasks/petfood.png","👕":"tasks/tshirt.png","👟":"tasks/shoes.png","🍚":"tasks/eating.png","🧸":"tasks/toys.png","🪥":"tasks/dbrush.png","🚽":"tasks/toilet.png","🧼":"tasks/soap.png","🩴":"tasks/help.png","👋":"tasks/wave.png","📖":"tasks/story.png","🎨":"tasks/drawing.png","🎤":"tasks/singing.png","✏️":"tasks/chinese.png","😊":"tasks/smile.png","💬":"tasks/thanks.png","🌱":"badges/sprout.png","⭐":"badges/star.png","🔥":"badges/flame.png","🏆":"badges/trophy.png","💎":"badges/diamond.png","🐾":"badges/pawprint.png","🏅":"badges/trophy.png","🥚":"pets/eggs/egg.png","🏰":"ui/castle.png"};
+var _PM={"🐉":"pets/dragon.png","🐧":"pets/penguin.png","🐰":"pets/bunny.png","🐱":"pets/kitten.png","🐶":"pets/puppy.png","🦊":"pets/whitefox.png","🥚":"pets/eggs/egg.png"};
+function iconTag(e){var p=_IM[e];return p?'<img src="assets/'+p+'" class="em" alt="">':e;}
+function pi(e){var p=_PM[e];return p?'<img src="assets/'+p+'" class="em" alt="">':e;}
+
+// ===== Auth Check =====
+(function(){ var token=localStorage.getItem('token'); if(!token){ window.location.href='/adventure-kingdom/'; } })();
+var AUTH_TOKEN = localStorage.getItem('token') || '';
+var API_BASE = '/adventure-kingdom';
+
+// ===== API Helpers =====
+async function api(url, opts){ opts=opts||{}; opts.headers=opts.headers||{}; opts.headers['Authorization']='Bearer '+AUTH_TOKEN;
+  if(opts.body && typeof opts.body==='object'){ opts.headers['Content-Type']='application/json'; opts.body=JSON.stringify(opts.body); }
+  var res=await fetch(API_BASE+url,opts); var json=await res.json();
+  if(json.code===-1 && (json.msg||'').indexOf('登录')>=0){ localStorage.removeItem('token'); window.location.href='/adventure-kingdom/'; }
+  return json; }
+async function loadTasks(){ var r=await api('/api/tasks'); if(r.code===0){ S.tasks=r.data; renderMap(); } }
+async function loadProgress(){ var r=await api('/api/progress?level='+S.currentLevel); if(r.code===0){ S.weekProgress[S.currentLevel]=r.data.weekProgress; S.dayDone=r.data.dayDone; renderMap(); } }
+async function loadUser(){ var r=await api('/api/user/profile'); if(r.code===0){ S.coins=r.data.coins||0; S.gems=r.data.gems||0; S.streak=r.data.streak||0; updateHUD(); } }
+async function saveComplete(taskId,level,day){ await api('/api/tasks/'+taskId+'/complete',{method:'POST',body:{level:level,day:day}}); }
+async function loadPets(){ var r=await api('/api/pets'); if(r.code===0){ S.pets=r.data; renderPets(); } }
+async function loadBadges(){ var r=await api('/api/badges'); if(r.code===0){ S.badges=r.data; renderBadges(); } }
+async function loadRewards(){ var r=await api('/api/rewards'); if(r.code===0){ S.rewards=r.data; S.shop=r.data; renderShop(); renderRewardList(); } }
+async function saveHatch(){ var r=await api('/api/pets/hatch',{method:'POST'}); if(r.code===0){ S.coins-=30; S.pets.push(r.data); updateHUD(); renderPets(); toast('孵化成功！获得 '+r.data.name+' 🎉'); } else { toast(r.msg||'孵化失败'); } }
+async function saveBadge(key){ await api('/api/badges/unlock',{method:'POST',body:{key:key}}); }
+async function saveRedeem(id,cost){ var r=await api('/api/rewards/'+id+'/redeem',{method:'POST'}); if(r.code===0){ S.coins=r.data.coins; S.spent+=cost; updateHUD(); toast('兑换成功！记得找爸爸妈妈领奖励~'); return true; } else { toast(r.msg||'金币不足'); return false; } }
+async function saveRewardAdd(emoji,name,cost){ var r=await api('/api/rewards',{method:'POST',body:{emoji:emoji,name:name,cost:cost}}); if(r.code===0){ return {id:r.data.id,emoji:emoji,name:name,cost:cost}; } return null; }
+async function saveRewardDel(id){ await api('/api/rewards/'+id,{method:'DELETE'}); }
+
+// ===== STATE ======
+var S = {
+  mode:"kid", // kid | parent
+  role:"🦊", name:"小勇士", coins:0, gems:0, saved:0, goal:200, todayGain:0, spent:0, combo:0, streak:3,
+  treasureOpened:false,
+  // 3关卡 × 每关7天
+  levels:[
+    {id:1, name:"新手冒险", icon:"🌱", color:"#7FD66E", desc:"第一周·养成好习惯", target:35},
+    {id:2, name:"进阶挑战", icon:"⭐", color:"#FFC93C", desc:"第二周·挑战自己", target:42},
+    {id:3, name:"大师之路", icon:"👑", color:"#B98CFF", desc:"第三周·成为大师", target:49}
+  ],
+  currentLevel:1, currentDay:(function(){var d=new Date().getDay();return d===0?7:d;})(), // 今天第几天(1=周一,7=周日)
+  viewLevel:1, viewDay:(function(){var d=new Date().getDay();return d===0?7:d;})(), // 默认=今天
+  // 每关7天的完成数 weekProgress[levelId] = [d1,d2,...,d7]
+  weekProgress:{1:[0,0,0,0,0,0,0], 2:[0,0,0,0,0,0,0], 3:[0,0,0,0,0,0,0]},
+  dayDone:{},
+  maxTasksPerDay:10,
+  // 任务池（家长发布）—— 每天可从中选，同一任务每天只能完成1次
+  tasks:[
+    {id:1, icon:"🛏️", name:"整理床铺", pinyin:"zhěng lǐ chuáng pù", desc:"起床后把被子叠好", pts:5, review:"photo", anim:"bed"},
+    {id:2, icon:"📚", name:"阅读三十分钟", pinyin:"yuè dú sān shí fēn zhōng", desc:"读完一本书或一个故事", pts:15, review:"photo", anim:"book"},
+    {id:3, icon:"🦷", name:"认真刷牙洗脸", pinyin:"rèn zhēn shuā yá xǐ liǎn", desc:"早晚各一次刷够两分钟", pts:5, review:"auto", anim:"tooth"},
+    {id:4, icon:"🏃", name:"运动二十分钟", pinyin:"yùn dòng èr shí fēn zhōng", desc:"跳绳跑步或户外玩耍", pts:12, review:"photo", anim:"run"},
+    {id:5, icon:"📝", name:"完成作业", pinyin:"wán chéng zuò yè", desc:"认真做完今天的作业", pts:20, review:"photo", anim:"write"},
+    {id:6, icon:"🍳", name:"帮厨小帮手", pinyin:"bāng chú xiǎo bāng shǒu", desc:"帮爸爸妈妈准备一顿饭", pts:18, review:"confirm", anim:"cook"},
+    {id:7, icon:"🥗", name:"自己收拾书包", pinyin:"zì jǐ shōu shi shū bāo", desc:"按课表整理好明天书本", pts:6, review:"photo", anim:"bag"},
+    {id:8, icon:"🦴", name:"倒垃圾", pinyin:"dào lā jī", desc:"把家里垃圾打包扔掉", pts:5, review:"auto", anim:"trash"},
+    {id:9, icon:"🧹", name:"整理书桌", pinyin:"zhěng lǐ shū zhuō", desc:"把书本文具归位擦干净", pts:8, review:"photo", anim:"sweep"},
+    {id:10, icon:"🐶", name:"照顾宠物", pinyin:"zhào gù chǒng wù", desc:"给小宠物添食添水", pts:5, review:"auto", anim:"pet"},
+    {id:11, icon:"👕", name:"自己穿衣服", pinyin:"zì jǐ chuān yī fu", desc:"早上自己选衣服穿好", pts:8, review:"photo", anim:"dress"},
+    {id:12, icon:"👟", name:"自己穿鞋子", pinyin:"zì jǐ chuān xié zi", desc:"分清左右脚自己穿", pts:5, review:"photo", anim:"shoe"},
+    {id:13, icon:"🍚", name:"自己吃饭", pinyin:"zì jǐ chī fàn", desc:"自己用小勺子吃饭不洒", pts:8, review:"confirm", anim:"eat"},
+    {id:14, icon:"🧸", name:"玩具送回家", pinyin:"wán jù sòng huí jiā", desc:"玩完玩具收进玩具箱", pts:6, review:"photo", anim:"teddy"},
+    {id:15, icon:"🪥", name:"自己刷牙", pinyin:"zì jǐ shuā yá", desc:"早晚自己挤牙膏刷牙", pts:5, review:"auto", anim:"tooth"},
+    {id:16, icon:"🚽", name:"自己上厕所", pinyin:"zì jǐ shàng cè suǒ", desc:"便后自己冲水洗手", pts:6, review:"auto", anim:"toilet"},
+    {id:17, icon:"🧼", name:"自己洗手", pinyin:"zì jǐ xǐ shǒu", desc:"饭前便后用洗手液洗手", pts:4, review:"auto", anim:"wash"},
+    {id:18, icon:"🩴", name:"帮妈妈拿东西", pinyin:"bāng mā ma ná dōng xi", desc:"帮大人拿拖鞋递遥控器", pts:6, review:"confirm", anim:"carry"},
+    {id:19, icon:"👋", name:"说你好和谢谢", pinyin:"shuō nǐ hǎo hé xiè xiè", desc:"见到人主动打招呼说谢谢", pts:5, review:"auto", anim:"wave"},
+    {id:20, icon:"📖", name:"认真听故事", pinyin:"rèn zhēn tīng gù shì", desc:"安静听完一本绘本说说讲了什么", pts:12, review:"confirm", anim:"read"},
+    {id:21, icon:"🎨", name:"画一幅画", pinyin:"huà yī fú huà", desc:"用水彩笔或蜡笔自由画画", pts:10, review:"photo", anim:"draw"},
+    {id:22, icon:"🎤", name:"唱一首儿歌", pinyin:"chàng yī shǒu ér gē", desc:"完整唱一首学过的儿歌", pts:8, review:"confirm", anim:"sing"},
+    {id:23, icon:"✏️", name:"认识一个汉字", pinyin:"rèn shi yī gè hàn zì", desc:"跟着大人认读一个新汉字", pts:6, review:"confirm", anim:"write"},
+    {id:24, icon:"🧸", name:"自己收拾绘本", pinyin:"zì jǐ shōu shi huì běn", desc:"把看完的绘本放回书架原位", pts:6, review:"photo", anim:"teddy"},
+    {id:25, icon:"😊", name:"不哭闹的一天", pinyin:"bù kū nào de yī tiān", desc:"遇到不开心也好好说话不发脾气", pts:12, review:"confirm", anim:"smile"}
+  ],
+  pendingTasks:[], // 孩子提交待家长审核
+  approvedTasks:[],
+  currentTask:null, photoTaken:false,
+  weekData:[3,5,4,6,5,7,4], // 模拟本周每日完成数
+  pets:[
+    {emoji:"🐉", name:"小火龙", lv:3, xp:60, got:true},
+    {emoji:"🐧", name:"冰冰鹅", lv:1, xp:20, got:true}
+  ],
+  eggs:[{emoji:"🥚", name:"神秘蛋", cost:30}],
+  badges:[
+    {emoji:"🌱", name:"初出茅庐", got:true}, {emoji:"⭐", name:"首次完成", got:true},
+    {emoji:"📚", name:"阅读达人", got:false}, {emoji:"🏃", name:"运动健将", got:false},
+    {emoji:"🦷", name:"卫生之星", got:false}, {emoji:"🔥", name:"连续7天", got:false},
+    {emoji:"🏆", name:"全勤一周", got:false}, {emoji:"💎", name:"储蓄能手", got:false},
+    {emoji:"🐾", name:"宠物大师", got:false}
+  ],
+  shop:[
+    {id:901, emoji:"📺", name:"看电视30分钟", cost:20},
+    {id:902, emoji:"🎮", name:"玩游戏20分钟", cost:25},
+    {id:903, emoji:"🍦", name:"冰淇淋一个", cost:30},
+    {id:904, emoji:"🧸", name:"新玩具一个", cost:80},
+    {id:905, emoji:"🎬", name:"看一场电影", cost:60},
+    {id:906, emoji:"🎢", name:"周末游乐园", cost:200}
+  ],
+  rewards:[ // 家长自定义奖励（初始用onboarding设的）
+    {id:907, emoji:"📺", name:"看电视30分钟", cost:20}
+  ],
+  // 任务模板库（50个，按手册）
+  templates:[
+    {cat:"学龄前",icon:"👕",name:"自己穿衣服",desc:"早上自己选衣服穿好",pts:8,review:"photo"},
+    {cat:"学龄前",icon:"👟",name:"自己穿鞋子",desc:"分清左右脚自己穿",pts:5,review:"photo"},
+    {cat:"学龄前",icon:"🍚",name:"自己吃饭",desc:"自己用小勺子吃饭不洒",pts:8,review:"confirm"},
+    {cat:"学龄前",icon:"🧸",name:"玩具送回家",desc:"玩完玩具收进玩具箱",pts:6,review:"photo"},
+    {cat:"学龄前",icon:"🪥",name:"自己刷牙",desc:"早晚自己挤牙膏刷牙",pts:5,review:"auto"},
+    {cat:"学龄前",icon:"🧼",name:"自己洗手",desc:"饭前便后用洗手液洗手",pts:4,review:"auto"},
+    {cat:"学龄前",icon:"🩴",name:"帮妈妈拿东西",desc:"帮大人拿拖鞋递遥控器",pts:6,review:"confirm"},
+    {cat:"学龄前",icon:"👋",name:"说你好和谢谢",desc:"见到人主动打招呼说谢谢",pts:5,review:"auto"},
+    {cat:"学龄前",icon:"📖",name:"认真听故事",desc:"安静听完一本绘本说说讲了什么",pts:12,review:"confirm"},
+    {cat:"学龄前",icon:"🎨",name:"画一幅画",desc:"用水彩笔或蜡笔自由画画",pts:10,review:"photo"},
+    {cat:"学龄前",icon:"🎤",name:"唱一首儿歌",desc:"完整唱一首学过的儿歌",pts:8,review:"confirm"},
+    {cat:"学龄前",icon:"✏️",name:"认识一个汉字",desc:"跟着大人认读一个新汉字",pts:6,review:"confirm"},
+    {cat:"学龄前",icon:"🧸",name:"自己收拾绘本",desc:"把看完的绘本放回书架原位",pts:6,review:"photo"},
+    {cat:"学龄前",icon:"😊",name:"不哭闹的一天",desc:"遇到不开心也好好说话不发脾气",pts:12,review:"confirm"},
+    {cat:"学龄前",icon:"🚽",name:"自己上厕所",desc:"便后自己冲水洗手",pts:6,review:"auto"},
+    {cat:"家务",icon:"🛏️",name:"整理床铺",desc:"起床后把小被子叠整齐",pts:5,review:"photo"},
+    {cat:"家务",icon:"🧹",name:"整理书桌",desc:"把书本文具归位，桌面擦干净",pts:8,review:"photo"},
+    {cat:"家务",icon:"🐶",name:"玩具归位",desc:"玩完玩具送它们回家",pts:6,review:"photo"},
+    {cat:"家务",icon:"🍳",name:"帮厨小帮手",desc:"帮爸爸妈妈择菜摆碗筷",pts:18,review:"confirm"},
+    {cat:"家务",icon:"🦴",name:"倒垃圾",desc:"把家里垃圾打包扔到指定地点",pts:5,review:"auto"},
+    {cat:"学习",icon:"📚",name:"阅读30分钟",desc:"读一本你喜欢的书或故事",pts:15,review:"photo"},
+    {cat:"学习",icon:"📝",name:"完成家庭作业",desc:"认真做完今天的作业自己检查",pts:20,review:"photo"},
+    {cat:"学习",icon:"🦷",name:"练字一页",desc:"端正写一页字帖或抄写",pts:10,review:"photo"},
+    {cat:"学习",icon:"📚",name:"背诵一首古诗",desc:"流利背诵并理解意思",pts:18,review:"confirm"},
+    {cat:"运动",icon:"🏃",name:"户外运动20分钟",desc:"跳绳跑步骑车或球类",pts:12,review:"photo"},
+    {cat:"运动",icon:"🏃",name:"跳绳300个",desc:"连续或累计跳够300个",pts:15,review:"photo"},
+    {cat:"习惯",icon:"🦷",name:"认真刷牙洗脸",desc:"早晚各一次刷够2分钟",pts:5,review:"auto"},
+    {cat:"习惯",icon:"🥗",name:"按时吃饭不挑食",desc:"三餐好好吃不浪费",pts:8,review:"confirm"},
+    {cat:"习惯",icon:"🦴",name:"自己收拾书包",desc:"按课表整理好明天书本",pts:6,review:"photo"},
+    {cat:"品德",icon:"🤝",name:"帮家人做一件事",desc:"主动帮长辈做一件事",pts:12,review:"confirm"},
+    {cat:"品德",icon:"💬",name:"说一句感谢的话",desc:"对帮助过你的人说谢谢",pts:5,review:"auto"}
+  ],
+  selectedIcon:"📚", selectedReview:"photo", selectedFreq:"daily", selectedCat:"all",
+  selectedRwdIcon:"📺", gateInput:""
+};
+
+// ====== AUDIO ======
+var AC=null;
+function ac(){ if(!AC){ try{ AC=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){ AC=null; } } if(AC && AC.state==="suspended"){ try{ AC.resume(); }catch(e){} } return AC; }
+function tone(f,d,t,v,w){ try{ var c=ac(); if(!c) return; var o=c.createOscillator(),g=c.createGain();
+  o.type=t||"sine"; o.frequency.value=f; var tm=c.currentTime+(w||0);
+  g.gain.setValueAtTime(0,tm); g.gain.linearRampToValueAtTime(v||.2,tm+.02);
+  g.gain.exponentialRampToValueAtTime(.001,tm+d); o.connect(g); g.connect(c.destination); o.start(tm); o.stop(tm+d+.05); }catch(e){} }
+function sfxCoin(){ tone(988,.08,"square",.18,0); tone(1319,.12,"square",.16,.07); }
+function sfxSuccess(){ tone(523,.1,"triangle",.2,0); tone(659,.1,"triangle",.2,.1); tone(784,.14,"triangle",.22,.2); tone(1047,.2,"triangle",.24,.32); }
+function sfxTap(){ tone(440,.05,"sine",.12); }
+function sfxBox(){ tone(880,.1,"sine",.2,0); tone(1100,.1,"sine",.2,.1); tone(1320,.15,"sine",.22,.2); }
+
+// ====== ONBOARDING ======
+function pickRole(el){ document.querySelectorAll('#ob-step1 .role').forEach(r=>r.classList.remove('sel')); el.classList.add('sel'); S.role=el.dataset.r; sfxTap(); }
+function obNext1(){ try{ S.name=document.getElementById('ob-name').value||"小勇士";
+  document.getElementById('ob-step1').style.display='none';
+  document.getElementById('ob-step2').style.display='block'; }catch(e){ alert("obNext1错误:"+e.message); } sfxTap(); }
+function obNext2(){ try{ var t=document.getElementById('ob-task').value||"整理床铺"; var p=parseInt(document.getElementById('ob-pts').value)||5;
+  S.tasks[0].name=t; S.tasks[0].pts=p;
+  document.getElementById('ob-step2').style.display='none';
+  document.getElementById('ob-step3').style.display='block'; }catch(e){ alert("obNext2错误:"+e.message); } sfxTap(); }
+function obFinish(){ try{ var r=document.getElementById('ob-reward').value||"看电视30分钟"; var rp=parseInt(document.getElementById('ob-rpts').value)||20;
+  S.rewards[0]={id:907,emoji:"📺",name:r,cost:rp}; S.shop[0]={id:901,emoji:"📺",name:r,cost:rp};
+  saveRewardAdd('📺',r,rp).then(function(rw){ if(rw) S.rewards[0]=rw; });
+  api('/api/auth/onboard-done',{method:'POST'}).catch(function(){});
+  document.getElementById('onboard').style.display='none';
+  document.getElementById('avatar').textContent=S.role; document.getElementById('heroName').textContent=S.name;
+  ac(); renderAll(); toast("国王发布了任务，去冒险吧! 🗺️"); }catch(e){ alert("obFinish错误:"+e.message); } }
+
+// ====== MODE SWAP (同端切换) ======
+function swapMode(){
+  if(S.mode==="kid"){ // 切到家长，需密码
+    showGate();
+  } else { // 切回孩子，直接切
+    S.mode="kid"; applyMode();
+  }
+}
+function applyMode(){
+  var phone=document.getElementById('phone');
+  var banner=document.getElementById('modeBanner');
+  if(S.mode==="parent"){
+    phone.classList.add('p-mode');
+    banner.className="mode-banner parent";
+    document.getElementById('modeText').textContent="👩 家长模式";
+    renderParent();
+  } else {
+    phone.classList.remove('p-mode');
+    banner.className="mode-banner kid";
+    document.getElementById('modeText').textContent="👶 孩子模式";
+    renderAll();
+  }
+}
+
+// Parent gate
+function showGate(){ S.gateInput=""; updateGateDots(); document.getElementById('parent-gate').classList.add('show'); renderGatePad(); }
+function closeGate(){ document.getElementById('parent-gate').classList.remove('show'); }
+function renderGatePad(){ var pad=document.getElementById('gatePad'); pad.innerHTML="";
+  for(var i=1;i<=9;i++){ (function(n){ var b=document.createElement('button'); b.className='gp'; b.textContent=n; b.onclick=function(){ gatePress(n); }; pad.appendChild(b); })(i); }
+  var b0=document.createElement('button'); b0.className='gp'; b0.textContent='0'; b0.onclick=function(){ gatePress(0); }; pad.appendChild(b0); }
+function gatePress(n){ sfxTap(); S.gateInput+=n; updateGateDots();
+  if(S.gateInput.length>=4){ setTimeout(function(){
+    // demo: 任意4位都通过（真实版需设密码）
+    S.mode="parent"; closeGate(); applyMode();
+  },200); } }
+function updateGateDots(){ var ds=document.querySelectorAll('#gateDots .gd');
+  ds.forEach(function(d,i){ if(i<S.gateInput.length){ d.classList.add('filled'); } else { d.classList.remove('filled'); } }); }
+
+// ====== KID TABS ======
+function goKidTab(el,id){ document.querySelectorAll('#kid-screens .screen').forEach(s=>s.classList.remove('active')); document.getElementById(id).classList.add('active');
+  document.querySelectorAll('#nav-kid .tab').forEach(t=>t.classList.remove('active')); el.classList.add('active'); sfxTap(); updateHUD(); }
+
+// ====== PARENT TABS ======
+function goParentTab(el, id){ document.querySelectorAll('.p-page').forEach(p=>p.classList.remove('active')); document.getElementById(id).classList.add('active');
+  document.querySelectorAll('#nav-parent .tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active'); sfxTap(); renderParent(); }
+
+// ====== MAP ======
+function renderMap(){
+  var box=document.getElementById('map-content'); if(!box) return;
+  var vl=S.levels[S.viewLevel-1]; var wp=S.weekProgress[S.viewLevel];
+  var doneTotal=wp.reduce(function(a,b){return a+b;},0);
+  var dayNames=["一","二","三","四","五","六","日"];
+  // 是否正在看"今天"
+  var isTodayView = (S.viewLevel===S.currentLevel && S.viewDay===S.currentDay);
+
+  var html='';
+  // 关卡进度条
+  html+='<div class="level-bar" style="margin-top:8px">';
+  S.levels.forEach(function(l){
+    var lwp=S.weekProgress[l.id]||[0,0,0,0,0,0,0]; var lt=lwp.reduce(function(a,b){return a+b;},0);
+    var pct=Math.min(100, Math.round(lt/l.target*100));
+    var cls=l.id<S.currentLevel?'done':(l.id===S.currentLevel?'current':'');
+    if(l.id===S.viewLevel) cls+=' sel';
+    html+='<div class="level-node '+cls+'" onclick="switchLevel('+l.id+')">';
+    html+='<div class="lic" style="background:'+l.color+'">'+iconTag(l.icon)+'</div>';
+    html+='<div class="ln">'+l.name+'</div>';
+    html+='<div class="lp"><i style="width:'+pct+'%;background:'+l.color+'"></i></div>';
+    html+='</div>';
+  });
+  html+='</div>';
+
+  // 当前查看关卡卡片
+  var viewDone=wp[S.viewDay-1]||0;
+  html+='<div class="level-card">';
+  html+='<div class="lh"><div class="lic" style="background:'+vl.color+'">'+iconTag(vl.icon)+'</div>';
+  html+='<div class="lt"><b>'+vl.name+'</b><span>'+vl.desc+' · 第'+S.viewDay+'天/7天'+(isTodayView?' · 今天':' · 查看')+'</span></div>';
+  html+='<div class="lv"><b>'+doneTotal+'/'+vl.target+'</b><span>累计完成</span></div></div>';
+  // 周历7天（高亮和锁定判断用 currentLevel/currentDay）
+  html+='<div class="week-cal">';
+  for(var d=1;d<=7;d++){
+    var isPast = (S.viewLevel<S.currentLevel) || (S.viewLevel===S.currentLevel && d<S.currentDay);
+    var isToday = (S.viewLevel===S.currentLevel && d===S.currentDay);
+    var isFuture = (S.viewLevel>S.currentLevel) || (S.viewLevel===S.currentLevel && d>S.currentDay);
+    var dcls = isPast?'past':(isToday?'today':'future');
+    if(d===S.viewDay) dcls+=' sel';
+    var dc=wp[d-1]||0;
+    html+='<div class="day-cell '+dcls+'" onclick="switchDay('+d+')">';
+    html+='<div class="dn">周'+dayNames[d-1]+'</div>';
+    html+='<div class="dc">'+dc+'</div>';
+    html+='<div class="ds">'+(isFuture?'待解锁':(isToday?'今天':'已完成'))+'</div>';
+    html+='</div>';
+  }
+  html+='</div></div>';
+
+  // 任务列表（显示 viewDay 的完成情况）→ 大卡片轮播
+  var dayKey=S.viewLevel+'_'+S.viewDay;
+  var doneMap=S.dayDone[dayKey]||{};
+  var doneCount=Object.keys(doneMap).length;
+  var viewDayLabel = isTodayView?'今天':'第'+S.viewDay+'天';
+  var canDo = isTodayView && doneCount<S.maxTasksPerDay;
+  html+='<div class="today-header"><h3>'+viewDayLabel+'的任务</h3><span class="cnt">'+doneCount+'/'+S.maxTasksPerDay+'</span></div>';
+
+  // 轮播容器
+  html+='<div class="carousel-wrap"><div class="carousel" id="taskCarousel">';
+  S.tasks.forEach(function(t){
+    var isDone=doneMap[t.id];
+    var bgColors=["#FFF3C4","#E0F4FF","#FFE0E0","#E8F5E9","#F3E8FF","#FFF0D0","#E0F7FA","#FFF3E0","#F1F8E9","#FCE4EC"];
+    var bg=bgColors[(t.id-1)%bgColors.length];
+    html+='<div class="task-card-big'+(isDone?' done':'')+'">';
+    // 动画大图区
+    html+='<div class="tc-anim anim-'+(t.anim||'bed')+'">';
+    html+='<div class="bg" style="background:'+bg+'"></div>';
+    html+='<div class="emoji">'+iconTag(t.icon)+'</div>';
+    html+='</div>';
+    // 信息区
+    html+='<div class="tc-body">';
+    html+='<div class="tc-pinyin">'+(t.pinyin||'')+'</div>';
+    html+='<div class="tc-name">'+t.name+'</div>';
+    html+='<div class="tc-desc">'+t.desc+'</div>';
+    html+='<div class="tc-foot">';
+    html+='<div class="tc-pts"><span class="coin">🪙</span><span class="v">+'+t.pts+'</span><span class="u">金币</span></div>';
+    if(isDone){ html+='<button class="tc-btn disabled">已完成 ✓</button>'; }
+    else if(!isTodayView){ html+='<button class="tc-btn disabled">仅今天可做</button>'; }
+    else if(doneCount>=S.maxTasksPerDay){ html+='<button class="tc-btn disabled">今日已满</button>'; }
+    else { html+='<button class="tc-btn" onclick="openTask('+t.id+')">去做 →</button>'; }
+    html+='</div></div></div>';
+  });
+  html+='</div>';
+  // 指示器
+  html+='<div class="carousel-dots" id="carouselDots">';
+  S.tasks.forEach(function(t,i){ html+='<div class="dot'+(i===0?' active':'')+'" onclick="scrollToCard('+i+')"></div>'; });
+  html+='</div></div>';
+
+  if(!isTodayView){
+    html+='<div style="text-align:center;font-size:13px;color:#999;padding:6px 10px">📜 这是'+viewDayLabel+'的记录。点周历的"今天"可回到当天做任务～</div>';
+  } else if(doneCount>=S.maxTasksPerDay){
+    html+='<div style="text-align:center;font-size:13px;color:#999;padding:6px 10px">🎉 今天已完成'+S.maxTasksPerDay+'个任务，太棒了！明天继续～</div>';
+  } else {
+    html+='<div style="text-align:center;font-size:12px;color:#aaa;padding:6px 10px">← 左右滑动查看所有任务 →</div>';
+  }
+  box.innerHTML=html;
+  // 绑定滚动指示器更新
+  setTimeout(bindCarousel,50);
+}
+
+function bindCarousel(){ var c=document.getElementById('taskCarousel'); if(!c) return;
+  c.onscroll=function(){ var dots=document.querySelectorAll('#carouselDots .dot'); if(!dots.length) return;
+    var idx=Math.round(c.scrollLeft / (c.scrollWidth/dots.length));
+    dots.forEach(function(d,i){ d.classList.toggle('active', i===idx); });
+  };
+}
+function scrollToCard(i){ var c=document.getElementById('taskCarousel'); if(!c) return;
+  var card=c.children[i]; if(card) c.scrollTo({left:card.offsetLeft-16,behavior:'smooth'}); sfxTap(); }
+
+function switchLevel(id){
+  if(id>S.currentLevel){ toast("前面的关卡还没完成哦～加油！💪"); return; }
+  S.viewLevel=id; S.viewDay = (id===S.currentLevel)?S.currentDay:1; // 切到当前关看今天，切到过去关看第1天
+  renderMap(); sfxTap();
+}
+function switchDay(d){
+  // 不允许查看未来的天
+  if(S.viewLevel>S.currentLevel){ toast("这关还没解锁呢～ 🔒"); return; }
+  if(S.viewLevel===S.currentLevel && d>S.currentDay){ toast("未来的日子还没解锁呢～ 🔒"); return; }
+  S.viewDay=d; renderMap(); sfxTap();
+}
+function backToToday(){ S.viewLevel=S.currentLevel; S.viewDay=S.currentDay; renderMap(); sfxTap(); }
+
+// 判断某任务今天是否已完成
+function isTaskDoneToday(taskId){ var dayKey=S.currentLevel+'_'+S.currentDay; return (S.dayDone[dayKey]||{})[taskId]; }
+// 今日已完成数
+function todayDoneCount(){ var dayKey=S.currentLevel+'_'+S.currentDay; return Object.keys(S.dayDone[dayKey]||{}).length; }
+
+// ====== TASK MODAL ======
+function openTask(taskId){ var t=S.tasks.find(function(x){return x.id===taskId;}); if(!t) return;
+  // 只能在"今天"做任务（不能在过去/未来天做）
+  if(!(S.viewLevel===S.currentLevel && S.viewDay===S.currentDay)){ toast("只能做今天的任务哦～点周历的「今天」回来吧！📅"); return; }
+  if(isTaskDoneToday(t.id)){ toast("这个任务今天已经做过啦 ✓ 明天再来～"); return; }
+  if(todayDoneCount()>=S.maxTasksPerDay){ toast("今天已经完成"+S.maxTasksPerDay+"个任务啦，明天继续！🎉"); return; }
+  S.currentTask=t; S.photoTaken=false;
+  document.getElementById('mIcon').textContent=t.icon;
+  document.getElementById('mTitle').textContent=t.name;
+  document.getElementById('mDesc').textContent=t.desc;
+  document.getElementById('mReward').textContent='+'+t.pts+' 🪙';
+  var ev=document.getElementById('mEvid');
+  if(t.review==="auto"){ ev.style.display='none'; } else if(t.review==="confirm"){ ev.style.display='block';
+    document.getElementById('photoBtn').innerHTML='<span class="em">👨</span>完成后请家长确认'; }
+  else { ev.style.display='block';
+    document.getElementById('photoBtn').classList.remove('taken'); document.getElementById('photoBtn').innerHTML='<span class="em">📷</span>点击拍照证明'; }
+  document.getElementById('doneBtn').disabled=false;
+  document.getElementById('task-modal').classList.add('show'); sfxTap(); }
+function takePhoto(){ S.photoTaken=true; var b=document.getElementById('photoBtn');
+  b.classList.add('taken'); b.innerHTML='<span class="em">✅</span>照片已拍好!'; sfxTap(); }
+function closeTask(){ document.getElementById('task-modal').classList.remove('show'); }
+
+function completeTask(){
+  var t=S.currentTask; if(!t) return;
+  if(t.review==="photo" && !S.photoTaken){ toast("先拍张照片给国王看看哦 📷"); return; }
+  if(t.review==="confirm"){ // 提交待审核
+    S.pendingTasks.push({task:t, level:S.currentLevel, day:S.currentDay}); closeTask(); renderParent();
+    toast("已提交，等家长审核～ ⏳"); sfxTap(); return; }
+  // auto 或 photo：直接完成
+  finishTask(t);
+}
+function finishTask(t){
+  document.getElementById('doneBtn').disabled=true;
+  // 记录今日完成
+  var dayKey=S.currentLevel+'_'+S.currentDay;
+  if(!S.dayDone[dayKey]) S.dayDone[dayKey]={};
+  S.dayDone[dayKey][t.id]=true;
+  S.weekProgress[S.currentLevel][S.currentDay-1]++;
+  S.coins+=t.pts; S.todayGain+=t.pts; S.combo++; S.approvedTasks.push({task:t, level:S.currentLevel, day:S.currentDay});
+  // 同步到API
+  saveComplete(t.id, S.currentLevel, S.currentDay).catch(function(){});
+  updateHUD();
+  var xp=(40+S.combo*8)%100; document.getElementById('xpbar').style.width=xp+'%'; document.getElementById('xpText').textContent=xp;
+  celebrate(t);
+  setTimeout(function(){ closeTask(); updateHUD(); renderMap(); checkBadges(t); renderParent();
+    // 检查是否完成本关 → 解锁下一关（推进"今天"到下一关第1天）
+    var wp=S.weekProgress[S.currentLevel]; var total=wp.reduce(function(a,b){return a+b;},0);
+    if(total>=S.levels[S.currentLevel-1].target && S.currentLevel<3){
+      S.currentLevel++; S.currentDay=1; S.viewLevel=S.currentLevel; S.viewDay=1;
+      toast("🎉 恭喜通关！解锁第"+S.currentLevel+"关「"+S.levels[S.currentLevel-1].name+"」！");
+      renderMap();
+    }
+  }, 1700);
+}
+function celebrate(t){
+  sfxSuccess(); setTimeout(sfxCoin,400);
+  var cel=document.getElementById('celebrate'); cel.classList.add('show');
+  document.getElementById('celBig').textContent=t.name+' 完成!';
+  document.getElementById('celSub').textContent='+'+t.pts+' 🪙 飞入钱包';
+  if(S.combo>=2){ var c=document.getElementById('combo'); c.textContent='连击 x'+S.combo+'! 🔥'; c.classList.remove('show'); void c.offsetWidth; c.classList.add('show'); }
+  var burst=document.getElementById('burst'); burst.innerHTML='';
+  var colors=['#FFC93C','#FF7A6B','#7CE3FF','#5FC97A','#B98CFF','#FFD66B'];
+  for(let i=0;i<24;i++){ let p=document.createElement('div'); p.className='particle';
+    let ang=(Math.PI*2/24)*i, dist=120+Math.random()*80; p.style.background=colors[i%colors.length]; p.style.left='0'; p.style.top='0';
+    p.style.transition='transform .9s cubic-bezier(.2,.7,.4,1),opacity .9s'; burst.appendChild(p);
+    requestAnimationFrame(function(){ setTimeout(function(){ p.style.transform='translate('+(Math.cos(ang)*dist)+'px,'+(Math.sin(ang)*dist)+'px) scale(0)'; p.style.opacity='0'; },10); }); }
+  for(let i=0;i<8;i++){ let s=document.createElement('div'); s.className='star'; s.textContent='⭐';
+    s.style.left=(-40+Math.random()*80)+'px'; s.style.top=(-40+Math.random()*80)+'px';
+    s.style.transition='transform 1s,opacity 1s'; s.style.opacity='1'; burst.appendChild(s);
+    requestAnimationFrame(function(){ setTimeout(function(){ s.style.transform='translate('+(Math.random()*200-100)+'px,'+(Math.random()*200-100)+'px) rotate(360deg)'; s.style.opacity='0'; },10); }); }
+  for(var i=0;i<6;i++){ (function(i){ setTimeout(function(){ flyCoin(); },200+i*120); })(i); }
+  var words=[['真棒！<b>国王爸爸</b>为你骄傲！'],['太厉害啦！<b>国王妈妈</b>夸你呢！'],['又完成一个！你是最棒的<b>小勇士</b>！'],['连续完成！你是王国的<b>大英雄</b>！']];
+  document.getElementById('kingWord').innerHTML=words[Math.min(S.combo-1,words.length-1)][0];
+  setTimeout(function(){ cel.classList.remove('show'); },1900);
+}
+function flyCoin(){
+  var c=document.createElement('div'); c.className='coin-fly'; c.textContent='🪙';
+  var hud=document.getElementById('coinN').getBoundingClientRect();
+  var phone=document.getElementById('phone').getBoundingClientRect();
+  c.style.left='50%'; c.style.top='42%'; c.style.transition='transform .6s cubic-bezier(.5,.1,.9,1),opacity .6s';
+  document.getElementById('celebrate').appendChild(c);
+  requestAnimationFrame(function(){ var dx=(hud.left-phone.left+10)-(phone.width/2), dy=(hud.top-phone.top+10)-(phone.height*0.42);
+    c.style.transform='translate('+dx+'px,'+dy+'px) scale(.3)'; c.style.opacity='0'; sfxCoin(); });
+  setTimeout(function(){ c.remove(); },700);
+}
+
+// ====== TREASURE BOX (新增) ======
+function openTreasure(){ if(S.treasureOpened){ toast("今天的宝箱已经开过啦，明天再来～ 🎁"); return; }
+  S.treasureOpened=true; document.getElementById('treasure-box').classList.add('opened'); document.getElementById('treasure-box').querySelector('.dot').style.display='none';
+  sfxBox();
+  // 调用API获取奖励
+  api('/api/treasure',{method:'POST'}).then(function(r){ if(r.code===0){
+    if(r.data.type==="gold"){ S.coins+=r.data.value; } else { S.gems+=r.data.value; }
+    toast("开到 "+r.data.value+" "+(r.data.type==="gold"?"🪙":"💎")+"！明天再来～");
+    updateHUD();
+  }}).catch(function(){ var rewards=[{t:"gold",v:5,e:"🪙"},{t:"gold",v:10,e:"🪙"},{t:"gem",v:3,e:"💎"},{t:"gem",v:5,e:"💎"}]; var r=rewards[Math.floor(Math.random()*rewards.length)]; if(r.t==="gold"){ S.coins+=r.v; } else { S.gems+=r.v; } updateHUD();  });
+  // 庆祝动画
+  var cel=document.getElementById('celebrate'); cel.classList.add('show');
+  document.getElementById('celBig').textContent='每日宝箱!';
+  document.getElementById('celSub').textContent='开到了奖励！';
+  document.getElementById('kingWord').innerHTML='每天来开宝箱都有惊喜哦！<b>坚持</b>是最大的魔法 ✨';
+  var burst=document.getElementById('burst'); burst.innerHTML='';
+  for(let i=0;i<16;i++){ let p=document.createElement('div'); p.className='particle';
+    let ang=(Math.PI*2/16)*i, dist=100+Math.random()*60; p.style.background=['#FFC93C','#7CE3FF','#B98CFF'][i%3]; p.style.left='0'; p.style.top='0';
+    p.style.transition='transform .9s,opacity .9s'; burst.appendChild(p);
+    requestAnimationFrame(function(){ setTimeout(function(){ p.style.transform='translate('+(Math.cos(ang)*dist)+'px,'+(Math.sin(ang)*dist)+'px) scale(0)'; p.style.opacity='0'; },10); }); }
+  setTimeout(function(){ cel.classList.remove('show'); updateHUD();  },1700);
+}
+
+// ====== HUD ======
+function updateHUD(){ animNum('coinN',S.coins); animNum('gemN',S.gems); animNum('walletCoin',S.coins); animNum('todayGain',S.todayGain); animNum('saveHave',S.saved); animNum('saveGoal',S.goal); animNum('savedN',S.saved); animNum('spentN',S.spent); }
+function animNum(id,target){ var el=document.getElementById(id); if(!el) return; var cur=parseInt(el.textContent.replace(/[^0-9-]/g,''))||0; var step=(target-cur)/12, n=0;
+  var iv=setInterval(function(){ cur+=step; n++; if(n>=12){ cur=target; clearInterval(iv); } el.textContent=Math.round(cur); },40); }
+
+// ====== SAVINGS ======
+function depositGem(){ if(S.gems<10){ toast("宝石不够啦，多做任务或开宝箱赚宝石吧 💎"); return; } S.gems-=10; S.saved+=10; updateHUD();
+  var pct=Math.min(100, S.saved/S.goal*100); document.getElementById('jarLiquid').style.height=pct+'%';
+  sfxCoin(); if(S.saved>=S.goal){ toast("储蓄罐满啦! 可以兑换大奖励 🎢"); } else { toast("存入成功! 离梦想更近一步 ✨"); } }
+
+// ====== PETS (新增) ======
+function renderPets(){ var list=document.getElementById('petList'); list.innerHTML='';
+  S.pets.forEach(function(p){ var d=document.createElement('div'); d.className='pet-card';
+    d.innerHTML='<div class="em">'+pi(p.emoji)+'</div><div class="info"><b>'+p.name+'</b><span>Lv.'+p.lv+' · 经验 '+p.xp+'/100</span><div class="pet-bar"><i style="width:'+p.xp+'%"></i></div></div><div class="lv"><b>'+p.lv+'</b><span>等级</span></div>';
+    list.appendChild(d); });
+  var eggs=document.getElementById('eggList'); eggs.innerHTML='';
+  S.eggs.forEach(function(e,idx){ var d=document.createElement('div'); d.className='pet-egg';
+    d.innerHTML='<div class="em">'+pi(e.emoji)+'</div><span>'+e.name+'<br>'+e.cost+'🪙孵化</span>';
+    d.onclick=function(){ hatchEgg(idx); }; eggs.appendChild(d); });
+}
+function hatchEgg(idx){ sfxTap(); loadPets().then(function(){ saveHatch(); }); }
+
+// ====== BADGES ======
+function renderBadges(){ var g=document.getElementById('badgeGrid'); g.innerHTML='';
+  S.badges.forEach(function(b){ var d=document.createElement('div'); d.className='badge'+(b.got?' unlocked':'');
+    d.innerHTML='<div class="em">'+iconTag(b.emoji)+'</div><span>'+b.name+'</span>'; g.appendChild(d); }); }
+function checkBadges(t){ var done=S.approvedTasks.length;
+  if(done>=2 && !S.badges[2].got){ S.badges[2].got=true; unlockBadge(S.badges[2]); saveBadge('reading'); }
+  if(done>=3 && !S.badges[3].got){ S.badges[3].got=true; unlockBadge(S.badges[3]); saveBadge('sport'); }
+  if(done>=5 && !S.badges[5].got){ S.badges[5].got=true; unlockBadge(S.badges[5]); saveBadge('streak7'); }
+  if(done>=10 && !S.badges[6].got){ S.badges[6].got=true; unlockBadge(S.badges[6]); saveBadge('week_full'); }
+  renderBadges(); }
+function unlockBadge(b){ setTimeout(function(){ toast("解锁徽章: "+b.name+" "+b.emoji); sfxSuccess(); },1900); }
+
+// ====== SHOP ======
+function renderShop(){ var l=document.getElementById('shopList'); l.innerHTML='';
+  S.shop.forEach(function(it){ var d=document.createElement('div'); d.className='shop-item';
+    d.innerHTML='<div class="em">'+iconTag(it.emoji)+'</div><div class="t"><b>'+it.name+'</b><span>需要 '+it.cost+' 🪙</span></div>';
+    var btn=document.createElement('button'); btn.className='buy'; btn.textContent='兑换';
+    btn.onclick=function(){ buyItem(it,btn); }; d.appendChild(btn); l.appendChild(d); }); }
+function buyItem(it,btn){ sfxTap(); saveRedeem(it.id,it.cost).then(function(ok){ if(ok){ btn.disabled=true; btn.textContent='已兑换'; sfxSuccess(); var c=document.getElementById('combo'); c.textContent='兑换成功!'; c.classList.remove('show'); void c.offsetWidth; c.classList.add('show'); renderShop(); } }); }
+
+// ====== PARENT: render all ======
+function renderParent(){ renderPending(); renderApproved(); renderParentStats(); renderTemplates(); renderRewardList(); renderReport(); }
+
+function renderParentStats(){
+  animNum('p-done',S.approvedTasks.length);
+  animNum('p-pending',S.pendingTasks.length);
+  animNum('p-coin',S.coins);
+  animNum('p-streak',S.streak);
+}
+function renderPending(){ var l=document.getElementById('pendingList');
+  if(S.pendingTasks.length===0){ l.innerHTML='<div style="font-size:13px;color:#999;text-align:center;padding:14px">暂无待审核任务</div>'; return; }
+  l.innerHTML=''; S.pendingTasks.forEach(function(item,idx){
+    var t=item.task;
+    var d=document.createElement('div'); d.className='task-row';
+    d.innerHTML='<div class="ic">'+iconTag(t.icon)+'</div><div class="info"><b>'+t.name+'</b><span>+'+t.pts+'🪙 · 第'+item.level+'关第'+item.day+'天 · 宝贝已提交</span></div>';
+    var ok=document.createElement('button'); ok.className='act approve'; ok.textContent='通过'; ok.onclick=function(){ approveTask(idx); };
+    var no=document.createElement('button'); no.className='act reject'; no.textContent='退回'; no.onclick=function(){ rejectTask(idx); };
+    d.appendChild(ok); d.appendChild(no); l.appendChild(d); }); }
+function renderApproved(){ var l=document.getElementById('approvedList');
+  if(S.approvedTasks.length===0){ l.innerHTML='<div style="font-size:13px;color:#999;text-align:center;padding:14px">暂无</div>'; return; }
+  l.innerHTML=''; S.approvedTasks.forEach(function(item){
+    var t=item.task;
+    var d=document.createElement('div'); d.className='task-row';
+    d.innerHTML='<div class="ic">'+iconTag(t.icon)+'</div><div class="info"><b>'+t.name+'</b><span>+'+t.pts+'🪙 · 第'+item.level+'关第'+item.day+'天 · 已通过</span></div><div class="pts">+'+t.pts+'🪙</div>';
+    l.appendChild(d); }); }
+function approveTask(idx){ var item=S.pendingTasks[idx]; S.pendingTasks.splice(idx,1); finishTask(item.task); toast("已通过 "+item.task.name+" +"+item.task.pts+"🪙"); }
+function rejectTask(idx){ var item=S.pendingTasks[idx]; S.pendingTasks.splice(idx,1); renderPending(); toast("已退回 "+item.task.name); }
+
+// ====== PARENT: Template picker ======
+function pickCat(el){ document.querySelectorAll('#tmplCat .c').forEach(c=>c.classList.remove('sel')); el.classList.add('sel'); S.selectedCat=el.dataset.cat; renderTemplates(); sfxTap(); }
+function renderTemplates(){ var l=document.getElementById('tmplList'); l.innerHTML='';
+  var list=S.selectedCat==="all"?S.templates:S.templates.filter(function(t){return t.cat===S.selectedCat;});
+  list.forEach(function(t){ var d=document.createElement('div'); d.className='tmpl-item';
+    d.innerHTML='<div class="em">'+iconTag(t.icon)+'</div><div class="info"><b>'+t.name+'</b><span>'+t.cat+' · +'+t.pts+'🪙 · '+({photo:"拍照",confirm:"家长确认",auto:"自动"}[t.review])+'</span></div><div class="add">+</div>';
+    d.onclick=function(){ addTemplateToTasks(t); }; l.appendChild(d); }); }
+function addTemplateToTasks(t){
+  S.tasks.push({id:Date.now(),icon:t.icon,name:t.name,desc:t.desc,pts:t.pts,review:t.review,anim:t.anim||"bed",pinyin:t.pinyin||""});
+  renderMap(); toast("已添加任务: "+t.name+" ✓"); sfxSuccess(); }
+
+// ====== PARENT: UGC create task ======
+function pickIcon(el){ document.querySelectorAll('#icPicker .opt').forEach(o=>o.classList.remove('sel')); el.classList.add('sel'); S.selectedIcon=el.dataset.i; sfxTap(); }
+function pickReview(el){ document.querySelectorAll('#reviewChips .chip').forEach(c=>c.classList.remove('sel')); el.classList.add('sel'); S.selectedReview=el.dataset.r; sfxTap(); }
+function pickFreq(el){ document.querySelectorAll('#freqChips .chip').forEach(c=>c.classList.remove('sel')); el.classList.add('sel'); S.selectedFreq=el.dataset.f; sfxTap(); }
+function createTask(){ var n=document.getElementById('f-name').value.trim(); if(!n){ toast("请输入任务名称"); return; }
+  var d=document.getElementById('f-desc').value.trim(); var p=parseInt(document.getElementById('f-pts').value)||10;
+  S.tasks.push({id:Date.now(),icon:S.selectedIcon,name:n,desc:d||"完成任务",pts:p,review:S.selectedReview});
+  // 清空表单
+  document.getElementById('f-name').value=''; document.getElementById('f-desc').value=''; document.getElementById('f-pts').value=10;
+  renderMap(); toast("任务发布成功: "+n+" ✓"); sfxSuccess();
+  // 同时把新任务加入模板库（UGC）
+  S.templates.push({cat:"自定义",icon:S.selectedIcon,name:n,desc:d,pts:p,review:S.selectedReview});
+}
+
+// ====== PARENT: Rewards ======
+function pickRwdIcon(el){ document.querySelectorAll('#rwdIcPicker .opt').forEach(o=>o.classList.remove('sel')); el.classList.add('sel'); S.selectedRwdIcon=el.dataset.i; sfxTap(); }
+function renderRewardList(){ var l=document.getElementById('rewardList'); l.innerHTML='';
+  if(S.rewards.length===0){ l.innerHTML='<div style="font-size:13px;color:#999;text-align:center;padding:14px">还没有奖励，下面添加一个吧</div>'; return; }
+  S.rewards.forEach(function(r,idx){ var d=document.createElement('div'); d.className='reward-item';
+    d.innerHTML='<div class="em">'+iconTag(r.emoji)+'</div><div class="info"><b>'+r.name+'</b><span>需要 '+r.cost+' 🪙</span></div><div class="del" onclick="delReward('+idx+')">✕</div>';
+    l.appendChild(d); }); }
+function addReward(){ var n=document.getElementById('r-name').value.trim(); if(!n){ toast("请输入奖励名称"); return; }
+  var p=parseInt(document.getElementById('r-pts').value)||50;
+  saveRewardAdd(S.selectedRwdIcon,n,p).then(function(rw){ if(rw){ S.rewards.push(rw); S.shop.push(rw); renderRewardList(); renderShop(); toast("奖励添加成功 ✓"); sfxSuccess(); } });
+  document.getElementById('r-name').value=''; document.getElementById('r-pts').value=50; }
+function delReward(idx){ var rw=S.rewards[idx]; if(rw){ saveRewardDel(rw.id); S.rewards.splice(idx,1); renderRewardList(); toast("已删除"); } }
+
+// ====== PARENT: Report ======
+function renderReport(){ var c=document.getElementById('weekChart'); c.innerHTML='';
+  var max=Math.max.apply(null,S.weekData); var days=["一","二","三","四","五","六","日"];
+  S.weekData.forEach(function(v,i){ var h=Math.round(v/max*100); var b=document.createElement('div'); b.className='b'; b.style.height=h+'%';
+    b.innerHTML='<em>'+v+'</em><span>'+days[i]+'</span>'; c.appendChild(b); });
+  var total=S.weekData.reduce(function(a,b){return a+b;},0);
+  document.getElementById('i-total').textContent=total; document.getElementById('i-streak').textContent=S.streak;
+  var advice = total>=35 ? "宝贝本周表现非常棒！可以适当增加挑战任务，激发更大潜力 🌟" : total>=20 ? "保持稳定节奏，建议在薄弱类别增加鼓励性任务 💪" : "本周完成偏少，建议降低任务难度，先重建宝贝信心和兴趣 🤗";
+  document.getElementById('i-advice').textContent=advice;
+  // week badges
+  var wb=document.getElementById('weekBadges'); wb.innerHTML='';
+  S.badges.filter(function(b){return b.got;}).forEach(function(b){ wb.innerHTML+='<div style="font-size:30px">'+iconTag(b.emoji)+'</div>'; });
+}
+
+// ====== TOAST ======
+function toast(msg){ var t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show');
+  clearTimeout(t._t); t._t=setTimeout(function(){ t.classList.remove('show'); },2600); }
+
+// ====== RENDER ALL ======
+var GAME_CFG = {};
+
+function renderAll(){ renderMap(); renderBadges(); renderShop(); renderPets(); updateHUD(); document.getElementById('xpbar').style.width='40%'; document.getElementById('xpText').textContent='40';
+  loadTasks(); loadUser(); loadProgress(); loadPets(); loadBadges(); loadRewards();
+  api('/api/config').then(function(r){ if(r.code===0){ GAME_CFG=r.data; S.levels=r.data.levels||S.levels; S.maxTasksPerDay=r.data.maxTasksPerDay||10; renderMap(); } }); }
+
+// Boot: 检查是否首次使用
+api('/api/user/profile').then(function(r){
+  if(r.code===0 && r.data.onboardingDone){
+    S.role=r.data.avatar||'🦊'; S.name=r.data.childName||'小勇士';
+    S.coins=r.data.coins||0; S.gems=r.data.gems||0;
+    document.getElementById('avatar').textContent=S.role;
+    document.getElementById('heroName').textContent=S.name;
+    updateHUD();
+    document.getElementById('onboard').style.display='none';
+    renderAll();
+  } else {
+    document.getElementById('onboard').style.display='flex';
+  }
+}).catch(function(){ document.getElementById('onboard').style.display='flex'; });
+
+// ====== PIN LOCK (家长密码) ======
+var PIN = {
+  mode:null,         // 'setup' | 'confirm' | 'verify'
+  digits:'',
+  firstPin:'',
+  attempts:0,
+  lockUntil:0,
+  lockTimer:null
+};
+
+function checkPinStatus(){
+  if(S.mode==="parent"){
+    S.mode="kid"; applyMode(); return;
+  }
+  api('/api/auth/pin-status').then(function(r){
+    if(r.code===0 && r.data && r.data.hasPin){
+      showPinVerify();
+    } else {
+      showPinSetup();
+    }
+  }).catch(function(){
+    // API 不可用时，走现有手势密码逻辑
+    showGate();
+  });
+}
+
+function showPinSetup(){
+  PIN.mode='setup'; PIN.digits=''; PIN.firstPin=''; PIN.attempts=0;
+  document.getElementById('pin-title').textContent='设置家长密码';
+  document.getElementById('pin-sub').textContent='请设置4位数字密码，防止宝贝误切模式';
+  document.getElementById('pinError').textContent='';
+  document.getElementById('pinLock').classList.remove('show');
+  updatePinDots(); renderPinPad();
+  document.getElementById('pin-overlay').classList.add('show');
+  sfxTap();
+}
+
+function showPinVerify(){
+  PIN.mode='verify'; PIN.digits=''; PIN.attempts=0; PIN.lockUntil=0;
+  if(PIN.lockTimer){ clearInterval(PIN.lockTimer); PIN.lockTimer=null; }
+  document.getElementById('pin-title').textContent='请输入家长密码';
+  document.getElementById('pin-sub').textContent='输入4位密码进入家长模式';
+  document.getElementById('pinError').textContent='';
+  document.getElementById('pinLock').classList.remove('show');
+  document.querySelectorAll('#pinDots .pd').forEach(function(d){ d.classList.remove('error'); });
+  updatePinDots(); renderPinPad();
+  document.getElementById('pin-overlay').classList.add('show');
+  sfxTap();
+}
+
+function closePin(){
+  document.getElementById('pin-overlay').classList.remove('show');
+  PIN.digits=''; PIN.firstPin=''; PIN.mode=null;
+  if(PIN.lockTimer){ clearInterval(PIN.lockTimer); PIN.lockTimer=null; }
+}
+
+function renderPinPad(){
+  var pad=document.getElementById('pinPad'); pad.innerHTML='';
+  for(var i=1;i<=9;i++){ (function(n){
+    var b=document.createElement('button'); b.className='pp'; b.textContent=n;
+    b.onclick=function(){ pinPress(n); }; pad.appendChild(b);
+  })(i); }
+  var empty=document.createElement('button'); empty.className='pp empty'; empty.textContent=''; pad.appendChild(empty);
+  var b0=document.createElement('button'); b0.className='pp'; b0.textContent='0';
+  b0.onclick=function(){ pinPress(0); }; pad.appendChild(b0);
+  var bd=document.createElement('button'); bd.className='pp del'; bd.textContent='⌫';
+  bd.onclick=function(){ pinDelete(); }; pad.appendChild(bd);
+}
+
+function pinPress(n){
+  if(PIN.lockUntil>0 && Date.now()<PIN.lockUntil) return;
+  if(PIN.digits.length>=4) return;
+  sfxTap(); PIN.digits+=n; updatePinDots();
+  if(PIN.digits.length===4){ setTimeout(submitPin,200); }
+}
+
+function pinDelete(){
+  if(PIN.lockUntil>0 && Date.now()<PIN.lockUntil) return;
+  if(PIN.digits.length===0) return;
+  sfxTap(); PIN.digits=PIN.digits.slice(0,-1); updatePinDots();
+}
+
+function updatePinDots(){
+  var ds=document.querySelectorAll('#pinDots .pd');
+  ds.forEach(function(d,i){
+    if(i<PIN.digits.length){ d.classList.add('filled'); }
+    else { d.classList.remove('filled'); }
+  });
+}
+
+function submitPin(){
+  if(PIN.mode==='setup'){
+    PIN.firstPin=PIN.digits; PIN.digits='';
+    PIN.mode='confirm';
+    document.getElementById('pin-title').textContent='确认家长密码';
+    document.getElementById('pin-sub').textContent='请再次输入相同的4位密码';
+    document.getElementById('pinError').textContent='';
+    updatePinDots();
+  } else if(PIN.mode==='confirm'){
+    if(PIN.digits===PIN.firstPin){
+      api('/api/auth/set-pin',{method:'POST',body:{pin:PIN.digits}}).then(function(r){
+        if(r.code===0){
+          document.getElementById('pin-overlay').classList.remove('show');
+          PIN.mode=null; PIN.digits=''; PIN.firstPin='';
+          S.mode="parent"; applyMode(); sfxSuccess();
+        } else {
+          showPinError(r.msg||'设置失败，请重试');
+          PIN.mode='setup'; PIN.digits=''; PIN.firstPin='';
+          document.getElementById('pin-title').textContent='设置家长密码';
+          document.getElementById('pin-sub').textContent='请设置4位数字密码，防止宝贝误切模式';
+          updatePinDots();
+        }
+      }).catch(function(){ showPinError('网络错误，请重试'); });
+    } else {
+      showPinError('两次密码不一致，请重新设置');
+      PIN.mode='setup'; PIN.digits=''; PIN.firstPin='';
+      document.getElementById('pin-title').textContent='设置家长密码';
+      document.getElementById('pin-sub').textContent='请设置4位数字密码，防止宝贝误切模式';
+      updatePinDots();
+    }
+  } else if(PIN.mode==='verify'){
+    api('/api/auth/verify-pin',{method:'POST',body:{pin:PIN.digits}}).then(function(r){
+      if(r.code===0){
+        document.getElementById('pin-overlay').classList.remove('show');
+        PIN.mode=null; PIN.digits=''; PIN.attempts=0;
+        S.mode="parent"; applyMode(); sfxSuccess();
+      } else {
+        PIN.attempts++;
+        if(PIN.attempts>=5){
+          lockPin();
+        } else {
+          showPinError('密码错误，还剩'+(5-PIN.attempts)+'次尝试');
+          shakePinDots();
+        }
+        PIN.digits=''; updatePinDots();
+      }
+    }).catch(function(){ showPinError('网络错误，请重试'); });
+  }
+}
+
+function showPinError(msg){
+  var el=document.getElementById('pinError'); el.textContent=msg; el.style.opacity='1';
+  clearTimeout(el._t); el._t=setTimeout(function(){ el.textContent=''; },2500);
+}
+
+function shakePinDots(){
+  document.querySelectorAll('#pinDots .pd').forEach(function(d){ d.classList.add('error'); });
+  setTimeout(function(){
+    document.querySelectorAll('#pinDots .pd').forEach(function(d){ d.classList.remove('error'); });
+  },400);
+}
+
+function lockPin(){
+  PIN.lockUntil=Date.now()+30000;
+  document.getElementById('pinLock').classList.add('show');
+  document.getElementById('pinError').textContent='';
+  document.querySelectorAll('#pinDots .pd').forEach(function(d){ d.classList.remove('filled','error'); });
+  document.getElementById('pin-sub').textContent='密码错误次数过多，已锁定30秒';
+  var remain=30;
+  document.getElementById('pinLockText').textContent='已锁定，请 '+remain+' 秒后重试';
+  if(PIN.lockTimer) clearInterval(PIN.lockTimer);
+  PIN.lockTimer=setInterval(function(){
+    var left=Math.ceil((PIN.lockUntil-Date.now())/1000);
+    if(left<=0){
+      clearInterval(PIN.lockTimer); PIN.lockTimer=null;
+      PIN.lockUntil=0; PIN.attempts=0;
+      document.getElementById('pinLock').classList.remove('show');
+      document.getElementById('pin-sub').textContent='输入4位密码进入家长模式';
+      document.getElementById('pinLockText').textContent='';
+    } else {
+      document.getElementById('pinLockText').textContent='已锁定，请 '+left+' 秒后重试';
+    }
+  },500);
+}
+</script>
+</body>
+</html>

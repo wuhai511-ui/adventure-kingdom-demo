@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>冒险王国 · 魔法之门</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=ZCOOL+KuaiLe&display=swap');
+
+:root {
+  --cream:#FBF7F0; --parchment:#F2E8D5; --ink:#2C1810; --ink-soft:#5C3D2E;
+  --gold:#D4A843; --gold-glow:#F0D68A; --gold-bright:#FFE08A;
+  --forest:#3D5A35; --forest-light:#5A7D4F; --moss:#8BA87E;
+  --sky-top:#C4DEF0; --sky-bot:#E8F2F8; --cloud:#F8F4EC;
+  --ember:#E07B6E; --lavender:#9B8EC4;
+  --shadow-soft:0 4px 20px rgba(44,24,16,.08);
+  --shadow-card:0 12px 40px rgba(44,24,16,.12),0 2px 8px rgba(44,24,16,.06);
+  --radius:28px; --radius-sm:16px;
+}
+
+*{margin:0;padding:0;box-sizing:border-box}
+
+body{
+  font-family:"ZCOOL KuaiLe","PingFang SC","Microsoft YaHei",sans-serif;
+  background:linear-gradient(175deg,var(--sky-top) 0%,var(--sky-bot) 40%,#F0EDE4 100%);
+  min-height:100vh;min-height:100dvh;
+  overflow-x:hidden;
+  position:relative;
+}
+
+/* ---- 背景场景 ---- */
+.scene{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden}
+
+/* 远山层 */
+.hill{position:absolute;border-radius:50%;opacity:.65}
+.hill-1{width:140%;height:280px;background:linear-gradient(180deg,#C5DBC0,#A8C9A0);bottom:-60px;left:-20%}
+.hill-2{width:120%;height:220px;background:linear-gradient(180deg,#B8D4B0,#9DC098);bottom:-30px;left:-10%}
+.hill-3{width:160%;height:180px;background:linear-gradient(180deg,#A0C898,#8BB882);bottom:-10px;left:-30%}
+
+/* 浮云 */
+.cloud{position:absolute;background:var(--cloud);border-radius:100px;opacity:.7}
+.cloud::before,.cloud::after{content:'';position:absolute;background:var(--cloud);border-radius:50%}
+.cloud-1{width:120px;height:40px;top:15%;animation:drift 28s linear infinite}
+.cloud-1::before{width:50px;height:50px;top:-20px;left:20px}
+.cloud-1::after{width:60px;height:45px;top:-12px;left:55px}
+.cloud-2{width:90px;height:30px;top:25%;right:20%;animation:drift 22s linear infinite;animation-delay:-12s}
+.cloud-2::before{width:40px;height:35px;top:-15px;left:15px}
+.cloud-2::after{width:45px;height:35px;top:-8px;left:45px}
+.cloud-3{width:100px;height:35px;top:10%;left:50%;animation:drift 32s linear infinite;animation-delay:-6s}
+.cloud-3::before{width:45px;height:40px;top:-15px;left:18px}
+
+@keyframes drift{from{transform:translateX(-160px)}to{transform:translateX(calc(100vw + 160px))}}
+
+/* 魔法粒子 */
+.particle{position:absolute;border-radius:50%;animation:float 6s ease-in-out infinite}
+.particle.gold{background:var(--gold-glow);box-shadow:0 0 8px var(--gold-glow)}
+.particle.lavender{background:var(--lavender);opacity:.5}
+.particle.forest{background:var(--forest-light);opacity:.4}
+@keyframes float{
+  0%,100%{transform:translateY(0) rotate(0deg);opacity:0}
+  20%{opacity:1}
+  50%{transform:translateY(-80px) rotate(180deg)}
+  80%{opacity:1}
+}
+
+/* 城堡剪影 */
+.castle-bg{position:absolute;bottom:60px;left:50%;transform:translateX(-50%);font-size:160px;opacity:.08;filter:blur(2px);pointer-events:none}
+
+/* ---- 主内容 ---- */
+main{position:relative;z-index:10;display:flex;align-items:center;justify-content:center;min-height:100vh;min-height:100dvh;padding:24px}
+
+/* 绘本卡片 */
+.card{
+  background:linear-gradient(175deg,var(--cream) 0%,var(--parchment) 100%);
+  border-radius:32px;
+  padding:40px 32px 36px;
+  max-width:410px;width:100%;
+  box-shadow:var(--shadow-card),inset 0 1px 0 rgba(255,255,255,.8);
+  border:2px solid rgba(212,168,67,.15);
+  position:relative;
+  overflow:hidden;
+}
+/* 卡片装饰线 */
+.card::before{
+  content:'';position:absolute;top:0;left:32px;right:32px;
+  height:3px;background:linear-gradient(90deg,transparent,var(--gold),transparent);
+  border-radius:0 0 2px 2px;
+}
+/* 角落金色小花 */
+.card::after{
+  content:'✦';position:absolute;bottom:16px;right:20px;
+  font-size:18px;color:var(--gold);opacity:.3;
+}
+
+/* 顶部图标区 */
+.icon-area{text-align:center;margin-bottom:8px;position:relative}
+.icon-castle{font-size:52px;display:inline-block;animation:castleFloat 3s ease-in-out infinite;filter:drop-shadow(0 4px 8px rgba(180,130,40,.3))}
+@keyframes castleFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+.icon-sparkle{position:absolute;font-size:16px;animation:twinkle 2s ease-in-out infinite}
+.icon-sparkle.s1{top:-4px;left:calc(50% - 40px);animation-delay:0s}
+.icon-sparkle.s2{top:10px;right:calc(50% - 38px);animation-delay:.7s}
+@keyframes twinkle{0%,100%{opacity:0;transform:scale(.5)}50%{opacity:1;transform:scale(1.2)}}
+
+/* 标题 */
+h1{font-size:38px;font-weight:400;color:var(--ink);text-align:center;margin-bottom:4px;letter-spacing:2px}
+.subtitle{text-align:center;font-size:15px;color:var(--ink-soft);margin-bottom:30px;opacity:.7}
+
+/* 表单 */
+.field{margin-bottom:18px}
+.field label{display:block;font-size:14px;font-weight:400;color:var(--ink-soft);margin-bottom:8px;letter-spacing:1px}
+.field input{
+  width:100%;padding:16px 18px;
+  border:2px solid #E5D8C0;border-radius:var(--radius-sm);
+  font-size:17px;font-family:inherit;
+  background:rgba(255,255,255,.7);
+  color:var(--ink);
+  transition:all .25s;
+  outline:none;
+}
+.field input:focus{
+  border-color:var(--gold);
+  box-shadow:0 0 0 4px rgba(212,168,67,.12);
+  background:#fff;
+}
+.field input::placeholder{color:#C8B89A}
+
+/* 按钮 */
+.btn{
+  display:block;width:100%;padding:18px;
+  border:none;border-radius:var(--radius-sm);
+  font-size:19px;font-family:inherit;font-weight:400;
+  letter-spacing:2px;
+  cursor:pointer;
+  transition:all .2s;
+}
+.btn-primary{
+  background:linear-gradient(160deg,var(--gold),#C99A38);
+  color:#FFFEF9;
+  box-shadow:0 6px 0 #A87B22,0 8px 24px rgba(180,130,40,.25);
+  position:relative;
+  overflow:hidden;
+}
+.btn-primary::after{
+  content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;
+  background:linear-gradient(45deg,transparent 40%,rgba(255,255,255,.2) 50%,transparent 60%);
+  animation:btnShine 3s ease-in-out infinite;
+}
+@keyframes btnShine{0%,100%{transform:translateX(-100%)}50%{transform:translateX(100%)}}
+.btn-primary:active{transform:translateY(3px);box-shadow:0 3px 0 #A87B22,0 4px 12px rgba(180,130,40,.2)}
+.btn-outline{
+  background:transparent;
+  border:2px solid var(--gold);
+  color:var(--ink-soft);
+  margin-top:14px;
+  box-shadow:none;
+}
+.btn-outline:active{background:rgba(212,168,67,.08)}
+
+/* 链接 */
+.link{display:inline-block;margin-top:18px;font-size:15px;color:var(--gold);cursor:pointer;text-align:center;width:100%;letter-spacing:1px;transition:color .2s}
+.link:hover{color:#C99A38}
+
+/* Toast */
+.toast{
+  position:fixed;top:30px;left:50%;transform:translateX(-50%);
+  background:var(--ink);color:var(--cream);
+  padding:14px 28px;border-radius:20px;font-size:15px;
+  z-index:999;display:none;
+  box-shadow:0 8px 24px rgba(44,24,16,.2);
+  letter-spacing:1px;
+}
+
+#loading{display:none;text-align:center;padding:10px 0}
+#loading .spinner{font-size:32px;animation:castleFloat 2s ease-in-out infinite}
+
+@media(max-width:400px){
+  .card{padding:32px 24px 28px}
+  h1{font-size:32px}
+}
+</style>
+</head>
+<body>
+
+<!-- 场景层 -->
+<div class="scene">
+  <div class="hill hill-1"></div>
+  <div class="hill hill-2"></div>
+  <div class="hill hill-3"></div>
+  <div class="cloud cloud-1"></div>
+  <div class="cloud cloud-2"></div>
+  <div class="cloud cloud-3"></div>
+  <div class="castle-bg">🏰</div>
+</div>
+
+<!-- 魔法粒子 -->
+<div class="scene" id="particles"></div>
+
+<!-- 主内容 -->
+<main>
+  <div class="card">
+    <div class="icon-area">
+      <span class="icon-castle">🏰</span>
+      <span class="icon-sparkle s1">✨</span>
+      <span class="icon-sparkle s2">⭐</span>
+    </div>
+    <h1>冒险王国</h1>
+    <p class="subtitle">开启魔法习惯养成之旅</p>
+
+    <div id="loginForm">
+      <div class="field"><label>📱 手机号</label><input id="phone" type="tel" placeholder="输入手机号" maxlength="11" autocomplete="tel"></div>
+      <div class="field"><label>🔑 密码</label><input id="password" type="password" placeholder="密码（至少4位）" autocomplete="current-password"></div>
+      <div class="field" id="nameField" style="display:none"><label>🧒 宝贝名字</label><input id="childName" placeholder="宝贝叫什么呢？" value="小勇士" autocomplete="off"></div>
+      <button class="btn btn-primary" id="submitBtn" onclick="handleSubmit()">登 录</button>
+      <a class="link" onclick="toggleMode()" id="modeLink">没有账号？去注册</a>
+    </div>
+
+    <div id="loading">
+      <div class="spinner">🗺️</div>
+      <p style="color:var(--ink-soft);margin-top:12px">正在展开魔法地图...</p>
+    </div>
+  </div>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+var isLogin = true;
+
+// Generate floating particles
+(function(){
+  var p = document.getElementById('particles');
+  var colors = ['gold','lavender','forest','gold'];
+  for(var i=0;i<18;i++){
+    var d=document.createElement('div');
+    d.className='particle '+colors[i%4];
+    d.style.left=Math.random()*100+'%';
+    d.style.top=(40+Math.random()*60)+'%';
+    d.style.width=(4+Math.random()*8)+'px';
+    d.style.height=d.style.width;
+    d.style.animationDelay=Math.random()*6+'s';
+    d.style.animationDuration=(4+Math.random()*5)+'s';
+    p.appendChild(d);
+  }
+})();
+
+function toggleMode(){
+  isLogin=!isLogin;
+  document.getElementById('submitBtn').textContent=isLogin?'登 录':'注册并登录';
+  document.getElementById('modeLink').textContent=isLogin?'没有账号？去注册':'已有账号？去登录';
+  document.getElementById('nameField').style.display=isLogin?'none':'block';
+}
+
+async function handleSubmit(){
+  var phone=document.getElementById('phone').value.trim();
+  var password=document.getElementById('password').value.trim();
+  if(!phone) return showToast('请输入手机号');
+  if(!/^1\d{10}$/.test(phone)) return showToast('请输入正确的手机号');
+  if(!password||password.length<4) return showToast('密码至少4位');
+
+  // If login mode, try login first
+  if(isLogin){
+    disableForm();
+    try{
+      var res=await fetch('/adventure-kingdom/api/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({phone,password})});
+      var json=await res.json();
+      if(json.code===0){
+        localStorage.setItem('token',json.data.token);
+        localStorage.setItem('user',JSON.stringify(json.data.user));
+        window.location.href='/adventure-kingdom/app.html';
+        return;
+      }
+      if(json.msg==='手机号未注册'){
+        // Auto switch to register mode
+        isLogin=false;
+        document.getElementById('submitBtn').textContent='注册并登录';
+        document.getElementById('modeLink').textContent='已有账号？去登录';
+        document.getElementById('nameField').style.display='block';
+        showToast('手机号未注册，请设置密码完成注册');
+        enableForm();
+        return;
+      }
+      enableForm();
+      showToast(json.msg||'登录失败');
+     }catch(e){ enableForm(); showToast('网络错误，请稍后重试'); }
+     return;
+  }
+
+  // Register mode
+  var childName=document.getElementById('childName').value.trim()||'小勇士';
+  disableForm();
+  try{
+    var res=await fetch('/adventure-kingdom/api/auth/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({phone,password,childName})});
+    var json=await res.json();
+    if(json.code===0){
+      localStorage.setItem('token',json.data.token);
+      localStorage.setItem('user',JSON.stringify(json.data.user));
+      window.location.href='/adventure-kingdom/app.html';
+    }else{
+      enableForm();
+      showToast(json.msg||'注册失败');
+    }
+  }catch(e){ enableForm(); showToast('网络错误，请稍后重试'); }
+}
+
+function disableForm(){
+  document.getElementById('loginForm').style.opacity='.5';
+  document.getElementById('submitBtn').disabled=true;
+  document.getElementById('loading').style.display='block';
+}
+function enableForm(){
+  document.getElementById('loginForm').style.opacity='1';
+  document.getElementById('submitBtn').disabled=false;
+  document.getElementById('loading').style.display='none';
+}
+
+function showToast(msg){
+  var t=document.getElementById('toast');
+  t.textContent=msg;t.style.display='block';
+  setTimeout(function(){t.style.display='none'},2500);
+}
+
+if(localStorage.getItem('token')) window.location.href='/adventure-kingdom/app.html';
+</script>
+</body>
+</html>

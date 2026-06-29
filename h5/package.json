@@ -1,0 +1,15 @@
+{
+  "name": "adventure-kingdom-h5",
+  "version": "1.0.0",
+  "description": "冒险王国 H5 版 — 儿童习惯养成工具",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.21.0",
+    "jsonwebtoken": "^9.0.0",
+    "bcryptjs": "^2.4.3",
+    "cors": "^2.8.5"
+  }
+}
