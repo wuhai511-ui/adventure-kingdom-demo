@@ -1261,16 +1261,15 @@ function updateLevelDisplay(){
   api('/api/user/level-info').then(function(r){
     if(r.code===0){
       var d=r.data;
-      document.querySelector('.hero-lv').innerHTML='Lv.'+d.currentLevel+' '+d.title+' · <span id="xpText">'+d.xp+'</span>/'+d.nextLevelXp;
+      document.querySelector('.hero-lv').innerHTML='Lv.'+d.currentLevel+' '+d.title+' \u00b7 <span id="xpText">'+d.xp+'</span>/'+d.nextLevelXp;
       document.getElementById('xpbar').style.width=(d.xp/d.nextLevelXp*100)+'%';
       document.getElementById('xpText').textContent=d.xp;
       if(S.lastLeveledUp && document.getElementById('celebrate').classList.contains('show')){
-        document.getElementById('kingWord').innerHTML='🎉 恭喜升级！你已经是 <b>'+d.title+'</b> 啦！';
+        document.getElementById('kingWord').innerHTML='\ud83c\udf89 \u606d\u559c\u5347\u7ea7\uff01\u4f60\u5df2\u7ecf\u662f <b>'+d.title+'</b> \u5566\uff01';
       }
+      S.lastLeveledUp=false;
     }
-   S.lastLeveledUp=false;
-  }
-});
+  });
 }
 function animNum(id,target){ var el=document.getElementById(id); if(!el) return; var cur=parseInt(el.textContent.replace(/[^0-9-]/g,''))||0; var step=(target-cur)/12, n=0;
   var iv=setInterval(function(){ cur+=step; n++; if(n>=12){ cur=target; clearInterval(iv); } el.textContent=Math.round(cur); },40); }
