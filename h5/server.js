@@ -90,7 +90,7 @@ app.post('/api/auth/register', function (req, res) {
   var user = {
     id: nextId(), phone: p.phone, password_hash: bcrypt.hashSync(p.password, 10),
     child_name: p.childName || '小勇士', avatar: '🦊', role_emoji: '🦊',
-    coins: 0, gems: 0, streak: 0, xp: 0, current_level: 1, current_day: (function(){var d=new Date().getDay();return d===0?7:d;})(),
+    coins: 0, gems: 0, streak: 0, lastCheckin: null, xp: 0, current_level: 1, current_day: (function(){var d=new Date().getDay();return d===0?7:d;})(),
     wechat_openid: '', wechat_unionid: '', onboarding_done: false,
     pin_hash: null, pin_fails: 0, pin_locked_until: null
   };
@@ -211,6 +211,36 @@ app.post('/api/treasure', authMiddleware, function (req, res) {
   if (reward.type === 'gem') user.gems += reward.value; else user.coins += reward.value;
   saveDB(db);
   return res.json({ code: 0, data: reward });
+});
+
+// ===== Checkin =====
+app.post('/api/checkin', authMiddleware, function (req, res) {
+  var today = new Date().toISOString().slice(0, 10);
+  var user = db.users.find(function (u) { return u.id === req.userId; });
+  if (!user) return res.json({ code: -1, msg: '用户不存在' });
+  if (user.lastCheckin === today) return res.json({ code: -1, msg: '今天已签到' });
+
+  var yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+  if (user.lastCheckin === yesterday) {
+    user.streak++;
+  } else {
+    user.streak = 1;
+  }
+
+  var reward = CHECKIN_REWARDS[Math.min(user.streak - 1, 6)];
+  user.lastCheckin = today;
+  user.coins += reward;
+  saveDB(db);
+  return res.json({ code: 0, data: { streak: user.streak, reward: reward, coins: user.coins } });
+});
+
+app.get('/api/checkin/status', authMiddleware, function (req, res) {
+  var today = new Date().toISOString().slice(0, 10);
+  var user = db.users.find(function (u) { return u.id === req.userId; });
+  if (!user) return res.json({ code: -1, msg: '用户不存在' });
+  var checkedIn = user.lastCheckin === today;
+  var todayReward = CHECKIN_REWARDS[Math.min(user.streak || 0, 6)];
+  return res.json({ code: 0, data: { checkedIn: checkedIn, streak: user.streak || 0, todayReward: todayReward } });
 });
 
 // ===== Pets / Badges / Rewards =====
@@ -355,6 +385,7 @@ var GAME_CONFIG = {
   eggCost: 30,
   defaultRewards: [{ emoji:'📺', name:'看电视30分钟', cost:20 }, { emoji:'🎢', name:'周末游乐园', cost:200 }]
 };
+var CHECKIN_REWARDS = [1, 2, 3, 5, 8, 13, 21];
 
 app.get('/api/config', function (req, res) {
   return res.json({ code: 0, data: GAME_CONFIG });

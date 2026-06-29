@@ -36,6 +36,11 @@ html,body{ height:100%; font-family:"PingFang SC","Microsoft YaHei",system-ui,sa
 .coin-pill{ color:var(--gold); } .gem-pill{ color:var(--gem); }
 .coin-pill .em,.gem-pill .em{ font-size:15px; }
 .em img, img.em { width:1em; height:1em; display:inline-block; vertical-align:middle; object-fit:contain; }
+.checkin-pill{ display:flex; align-items:center; gap:4px; background:rgba(255,183,77,.18); padding:3px 9px 3px 5px; border-radius:20px; font-size:12px; font-weight:800; backdrop-filter:blur(4px); color:#FFB74D; cursor:pointer; transition:all .15s; white-space:nowrap; }
+.checkin-pill .em{ font-size:14px; }
+.checkin-pill:active{ transform:scale(.94); }
+.checkin-pill.done{ color:#999; background:rgba(255,255,255,.08); cursor:default; }
+.checkin-pill.done:active{ transform:none; }
 
 
 /* ===== Screens ===== */
@@ -450,6 +455,7 @@ html,body{ height:100%; font-family:"PingFang SC","Microsoft YaHei",system-ui,sa
     <div class="wallets">
       <div class="coin-pill"><span class="em">🪙</span><span id="coinN">0</span></div>
       <div class="gem-pill"><span class="em">💎</span><span id="gemN">0</span></div>
+      <div class="checkin-pill" id="checkinPill" onclick="doCheckin()"><span class="em">📅</span><span id="checkinText">签到</span></div>
     </div>
   </div>
 
@@ -1181,6 +1187,71 @@ function openTreasure(){ if(S.treasureOpened){ toast("今天的宝箱已经开�
   setTimeout(function(){ cel.classList.remove('show'); updateHUD();  },1700);
 }
 
+// ====== CHECKIN ======
+var CHECKIN_STATUS = { checkedToday: false, streak: 0, reward: 0 };
+
+async function loadCheckinStatus(){
+  try {
+    var r = await api('/api/checkin/status');
+    if(r.code===0 && r.data){
+      CHECKIN_STATUS.checkedToday = r.data.checkedIn || false;
+      CHECKIN_STATUS.streak = r.data.streak || 0;
+      CHECKIN_STATUS.reward = r.data.todayReward || 0;
+      renderCheckinPill();
+    }
+  } catch(e){}
+}
+
+function renderCheckinPill(){
+  var pill = document.getElementById('checkinPill');
+  var text = document.getElementById('checkinText');
+  if(!pill || !text) return;
+  if(CHECKIN_STATUS.checkedToday){
+    pill.className = 'checkin-pill done';
+    text.textContent = '✅ 已签到 ' + CHECKIN_STATUS.streak + '天';
+    pill.onclick = function(){ toast('今天已经签到啦～明天再来！☀️'); };
+  } else {
+    pill.className = 'checkin-pill';
+    text.textContent = '📅 签到 +' + CHECKIN_STATUS.reward + ' 🪙';
+    pill.onclick = doCheckin;
+  }
+}
+
+async function doCheckin(){
+  if(CHECKIN_STATUS.checkedToday) return;
+  var pill = document.getElementById('checkinPill');
+  pill.onclick = null;
+  try {
+    var r = await api('/api/checkin', {method:'POST'});
+    if(r.code===0 && r.data){
+      CHECKIN_STATUS.checkedToday = true;
+      CHECKIN_STATUS.streak = r.data.streak || (CHECKIN_STATUS.streak + 1);
+      CHECKIN_STATUS.reward = r.data.todayReward || CHECKIN_STATUS.reward;
+      if(r.data.coins != null) S.coins = r.data.coins;
+      renderCheckinPill();
+      updateHUD();
+      sfxSuccess();
+      setTimeout(sfxCoin, 200);
+      var cel = document.getElementById('celebrate');
+      cel.classList.add('show');
+      document.getElementById('celBig').textContent = '签到成功!';
+      document.getElementById('celSub').textContent = '+' + CHECKIN_STATUS.reward + ' 🪙';
+      document.getElementById('kingWord').innerHTML = '连续' + CHECKIN_STATUS.streak + '天签到！<b>坚持</b>是最酷的事 🔥';
+      for(var i=0; i<5; i++){
+        (function(i){ setTimeout(function(){ flyCoin(); }, 100 + i*150); })(i);
+      }
+      setTimeout(function(){ cel.classList.remove('show'); }, 1800);
+      toast('签到成功！连续签到 ' + CHECKIN_STATUS.streak + ' 天，获得 +' + CHECKIN_STATUS.reward + ' 🪙！🌟');
+    } else {
+      toast(r.msg || '签到失败，请稍后再试');
+      renderCheckinPill();
+    }
+  } catch(e){
+    toast('网络错误，请稍后再试');
+    renderCheckinPill();
+  }
+}
+
 // ====== HUD ======
 function updateHUD(){ animNum('coinN',S.coins); animNum('gemN',S.gems); animNum('walletCoin',S.coins); animNum('todayGain',S.todayGain); animNum('saveHave',S.saved); animNum('saveGoal',S.goal); animNum('savedN',S.saved); animNum('spentN',S.spent); }
 function updateLevelDisplay(){
@@ -1327,7 +1398,7 @@ var GAME_CFG = {};
 
 function renderAll(){ renderMap(); renderBadges(); renderShop(); renderPets(); updateHUD(); document.getElementById('xpbar').style.width='40%'; document.getElementById('xpText').textContent='40';
   loadTasks(); loadUser(); loadProgress(); loadPets(); loadBadges(); loadRewards();
-  api('/api/config').then(function(r){ if(r.code===0){ GAME_CFG=r.data; S.levels=r.data.levels||S.levels; S.maxTasksPerDay=r.data.maxTasksPerDay||10; renderMap(); } }); updateLevelDisplay(); }
+  api('/api/config').then(function(r){ if(r.code===0){ GAME_CFG=r.data; S.levels=r.data.levels||S.levels; S.maxTasksPerDay=r.data.maxTasksPerDay||10; renderMap(); } }); updateLevelDisplay(); loadCheckinStatus(); }
 
 // Boot: 检查是否首次使用
 api('/api/user/profile').then(function(r){
