@@ -164,9 +164,19 @@ app.post('/api/tasks/:id/complete', authMiddleware, function (req, res) {
 
   db.records.push({ id: nextId(), userId: req.userId, taskId, level, day, time: Date.now() });
   var user = db.users.find(function (u) { return u.id === req.userId; });
-  user.coins += task.pts; user.xp += 8;
+  user.coins += task.pts;
+  var combo = todayCount;
+  var comboBonus = combo * GAME_CONFIG.xpPerCombo;
+  var xpGain = GAME_CONFIG.xpBase + comboBonus;
+  user.xp += xpGain;
+  var leveledUp = false;
+  while (user.xp >= user.current_level * 100) {
+    user.xp -= user.current_level * 100;
+    user.current_level++;
+    leveledUp = true;
+  }
   saveDB(db);
-  return res.json({ code: 0, data: { pts: task.pts, coins: user.coins, xp: user.xp } });
+  return res.json({ code: 0, data: { pts: task.pts, coins: user.coins, xp: user.xp, currentLevel: user.current_level, xpGain: xpGain, leveledUp: leveledUp } });
 });
 
 // ===== Progress =====
@@ -325,6 +335,15 @@ app.get('/api/auth/pin-status', authMiddleware, function (req, res) {
   return res.json({ code: 0, data: { hasPin: !!user.pin_hash, locked: locked, remainingLock: remainingLock } });
 });
 
+// ===== Level Titles =====
+var LEVEL_TITLES = [
+  { minLevel: 1, title: "小探险家" },
+  { minLevel: 3, title: "勇敢冒险家" },
+  { minLevel: 5, title: "魔法骑士" },
+  { minLevel: 7, title: "传说勇士" },
+  { minLevel: 10, title: "荣耀国王" }
+];
+
 // ===== Game Config =====
 var GAME_CONFIG = {
   maxTasksPerDay: 10,
@@ -339,6 +358,18 @@ var GAME_CONFIG = {
 
 app.get('/api/config', function (req, res) {
   return res.json({ code: 0, data: GAME_CONFIG });
+});
+
+// ===== Level Info =====
+app.get('/api/user/level-info', authMiddleware, function (req, res) {
+  var u = db.users.find(function (x) { return x.id === req.userId; });
+  if (!u) return res.json({ code: -1, msg: '用户不存在' });
+  var level = u.current_level;
+  var title = LEVEL_TITLES[0].title;
+  for (var i = LEVEL_TITLES.length - 1; i >= 0; i--) {
+    if (level >= LEVEL_TITLES[i].minLevel) { title = LEVEL_TITLES[i].title; break; }
+  }
+  return res.json({ code: 0, data: { xp: u.xp, currentLevel: level, nextLevelXp: level * 100, title: title } });
 });
 
 // ===== User Profile（返回 onboarding 状态） =====

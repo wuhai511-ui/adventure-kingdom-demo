@@ -1092,7 +1092,7 @@ function openTask(taskId){ var t=S.tasks.find(function(x){return x.id===taskId;}
   document.getElementById('task-modal').classList.add('show'); sfxTap(); }
 function takePhoto(){ S.photoTaken=true; var b=document.getElementById('photoBtn');
   b.classList.add('taken'); b.innerHTML='<span class="em">✅</span>照片已拍好!'; sfxTap(); }
-function closeTask(){ document.getElementById('task-modal').classList.remove('show'); }
+function closeTask(){ document.getElementById('task-modal').classList.remove('show'); updateLevelDisplay(); }
 
 function completeTask(){
   var t=S.currentTask; if(!t) return;
@@ -1114,7 +1114,7 @@ function finishTask(t){
   // 同步到API
   saveComplete(t.id, S.currentLevel, S.currentDay).catch(function(){});
   updateHUD();
-  var xp=(40+S.combo*8)%100; document.getElementById('xpbar').style.width=xp+'%'; document.getElementById('xpText').textContent=xp;
+  updateLevelDisplay();
   celebrate(t);
   setTimeout(function(){ closeTask(); updateHUD(); renderMap(); checkBadges(t); renderParent();
     // 检查是否完成本关 → 解锁下一关（推进"今天"到下一关第1天）
@@ -1145,7 +1145,7 @@ function celebrate(t){
   for(var i=0;i<6;i++){ (function(i){ setTimeout(function(){ flyCoin(); },200+i*120); })(i); }
   var words=[['真棒！<b>国王爸爸</b>为你骄傲！'],['太厉害啦！<b>国王妈妈</b>夸你呢！'],['又完成一个！你是最棒的<b>小勇士</b>！'],['连续完成！你是王国的<b>大英雄</b>！']];
   document.getElementById('kingWord').innerHTML=words[Math.min(S.combo-1,words.length-1)][0];
-  setTimeout(function(){ cel.classList.remove('show'); },1900);
+  setTimeout(function(){ cel.classList.remove('show'); updateLevelDisplay(); },1900);
 }
 function flyCoin(){
   var c=document.createElement('div'); c.className='coin-fly'; c.textContent='🪙';
@@ -1183,6 +1183,21 @@ function openTreasure(){ if(S.treasureOpened){ toast("今天的宝箱已经开�
 
 // ====== HUD ======
 function updateHUD(){ animNum('coinN',S.coins); animNum('gemN',S.gems); animNum('walletCoin',S.coins); animNum('todayGain',S.todayGain); animNum('saveHave',S.saved); animNum('saveGoal',S.goal); animNum('savedN',S.saved); animNum('spentN',S.spent); }
+function updateLevelDisplay(){
+  api('/api/user/level-info').then(function(r){
+    if(r.code===0){
+      var d=r.data;
+      document.querySelector('.hero-lv').innerHTML='Lv.'+d.currentLevel+' '+d.title+' · <span id="xpText">'+d.xp+'</span>/'+d.nextLevelXp;
+      document.getElementById('xpbar').style.width=(d.xp/d.nextLevelXp*100)+'%';
+      document.getElementById('xpText').textContent=d.xp;
+      if(S.lastLeveledUp && document.getElementById('celebrate').classList.contains('show')){
+        document.getElementById('kingWord').innerHTML='🎉 恭喜升级！你已经是 <b>'+d.title+'</b> 啦！';
+      }
+    }
+   S.lastLeveledUp=false;
+  }
+});
+}
 function animNum(id,target){ var el=document.getElementById(id); if(!el) return; var cur=parseInt(el.textContent.replace(/[^0-9-]/g,''))||0; var step=(target-cur)/12, n=0;
   var iv=setInterval(function(){ cur+=step; n++; if(n>=12){ cur=target; clearInterval(iv); } el.textContent=Math.round(cur); },40); }
 
@@ -1312,7 +1327,7 @@ var GAME_CFG = {};
 
 function renderAll(){ renderMap(); renderBadges(); renderShop(); renderPets(); updateHUD(); document.getElementById('xpbar').style.width='40%'; document.getElementById('xpText').textContent='40';
   loadTasks(); loadUser(); loadProgress(); loadPets(); loadBadges(); loadRewards();
-  api('/api/config').then(function(r){ if(r.code===0){ GAME_CFG=r.data; S.levels=r.data.levels||S.levels; S.maxTasksPerDay=r.data.maxTasksPerDay||10; renderMap(); } }); }
+  api('/api/config').then(function(r){ if(r.code===0){ GAME_CFG=r.data; S.levels=r.data.levels||S.levels; S.maxTasksPerDay=r.data.maxTasksPerDay||10; renderMap(); } }); updateLevelDisplay(); }
 
 // Boot: 检查是否首次使用
 api('/api/user/profile').then(function(r){
@@ -1323,7 +1338,7 @@ api('/api/user/profile').then(function(r){
     document.getElementById('heroName').textContent=S.name;
     updateHUD();
     document.getElementById('onboard').style.display='none';
-    renderAll();
+    renderAll(); updateLevelDisplay();
   } else {
     document.getElementById('onboard').style.display='flex';
   }
