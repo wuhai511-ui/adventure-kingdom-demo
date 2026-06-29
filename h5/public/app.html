@@ -233,6 +233,9 @@ html,body{ height:100%; font-family:"PingFang SC","Microsoft YaHei",system-ui,sa
 .pet-bar{ height:6px; background:#eee; border-radius:4px; margin-top:6px; overflow:hidden; } .pet-bar > i{ display:block; height:100%; background:var(--purple); border-radius:4px; }
 .pet-egg{ display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; aspect-ratio:1; background:linear-gradient(145deg,#F0E8D8,#E5D8C0); border-radius:16px; border:3px dashed rgba(58,42,26,.2); cursor:pointer; }
 .pet-egg .em{ font-size:40px; } .pet-egg span{ font-size:10px; color:#999; font-weight:700; text-align:center; }
+.pet-feed{ padding:6px 12px; border:none; border-radius:10px; background:linear-gradient(145deg,var(--gold-d),#C98A1C); color:#fff; font-size:12px; font-weight:700; cursor:pointer; box-shadow:0 3px 0 #A8761A; white-space:nowrap; transition:transform .1s; flex:none; }
+.pet-feed:active{ transform:translateY(2px); box-shadow:0 1px 0 #A8761A; }
+.pet-feed:disabled{ background:#ccc; box-shadow:none; color:#999; cursor:default; transform:none; }
 
 /* ===== Task modal ===== */
 #task-modal{ position:absolute; inset:0; z-index:60; background:rgba(0,0,0,.5); display:none; align-items:flex-end; }
@@ -1279,8 +1282,8 @@ function depositGem(){ if(S.gems<10){ toast("宝石不够啦，多做任务或�
 
 // ====== PETS (新增) ======
 function renderPets(){ var list=document.getElementById('petList'); list.innerHTML='';
-  S.pets.forEach(function(p){ var d=document.createElement('div'); d.className='pet-card';
-    d.innerHTML='<div class="em">'+pi(p.emoji)+'</div><div class="info"><b>'+p.name+'</b><span>Lv.'+p.lv+' · 经验 '+p.xp+'/100</span><div class="pet-bar"><i style="width:'+p.xp+'%"></i></div></div><div class="lv"><b>'+p.lv+'</b><span>等级</span></div>';
+  S.pets.forEach(function(p,idx){ var d=document.createElement('div'); d.className='pet-card';
+    d.innerHTML='<div class="em" onclick="renamePet('+idx+')">'+pi(p.emoji)+'</div><div class="info"><b>'+p.name+'</b><span>Lv.'+ (p.level||p.lv||1) +' · 经验 '+p.xp+'/100</span><div class="pet-bar"><i style="width:'+p.xp+'%"></i></div></div><div class="lv"><b>'+ (p.level||p.lv||1) +'</b><span>等级</span></div><button class="pet-feed"'+(S.coins<5?' disabled':'')+' onclick="feedPet('+idx+')">🍖 喂食(5🪙)</button>';
     list.appendChild(d); });
   var eggs=document.getElementById('eggList'); eggs.innerHTML='';
   S.eggs.forEach(function(e,idx){ var d=document.createElement('div'); d.className='pet-egg';
@@ -1288,6 +1291,8 @@ function renderPets(){ var list=document.getElementById('petList'); list.innerHT
     d.onclick=function(){ hatchEgg(idx); }; eggs.appendChild(d); });
 }
 function hatchEgg(idx){ sfxTap(); loadPets().then(function(){ saveHatch(); }); }
+function renamePet(idx){ var pet=S.pets[idx]; if(!pet) return; var newName=prompt("\u7ed9\u5ba0\u7269\u8d77\u4e2a\u65b0\u540d\u5b57\u5427:",pet.name); if(!newName||!newName.trim()) return; newName=newName.trim(); if(pet.id){ api("/api/pets/"+pet.id+"/rename",{method:"POST",body:{name:newName}}).then(function(r){ if(r.code===0){ loadPets(); toast("\u6539\u540d\u6210\u529f\uff01"); } }); } else { pet.name=newName; renderPets(); toast("\u6539\u540d\u6210\u529f\uff01"); } }
+function feedPet(idx){ var pet=S.pets[idx]; if(!pet||S.coins<5) return; if(pet.id){ api("/api/pets/"+pet.id+"/feed",{method:"POST"}).then(function(r){ if(r.code===0){ S.coins=r.data.coins||S.coins-5; loadPets(); updateHUD(); sfxCoin(); if(r.data&&r.data.leveledUp){ toast("\uD83C\uDF89 "+pet.name+" \u5347\u7ea7\u5230 Lv."+r.data.level+"\uff01"); } else { toast(pet.name+" \u5403\u5f97\u5f88\u5f00\u5fc3\uff01+\u7ecf\u9a8c"); } } }); } else { S.coins-=5; pet.xp+=10; if(pet.xp>=100){ pet.xp=pet.xp-100; pet.lv=(pet.lv||0)+1; toast("\uD83C\uDF89 "+pet.name+" \u5347\u7ea7\u5230 Lv."+pet.lv+"\uff01"); } else { toast(pet.name+" \u5403\u5f97\u5f88\u5f00\u5fc3\uff01+\u7ecf\u9a8c"); } renderPets(); updateHUD(); sfxCoin(); } }
 
 // ====== BADGES ======
 function renderBadges(){ var g=document.getElementById('badgeGrid'); g.innerHTML='';

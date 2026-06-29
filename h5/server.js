@@ -262,6 +262,33 @@ app.post('/api/pets/hatch', authMiddleware, function (req, res) {
   saveDB(db);
   return res.json({ code: 0, data: pet });
 });
+app.post('/api/pets/:id/feed', authMiddleware, function (req, res) {
+  var petId = parseInt(req.params.id);
+  var pet = db.pets.find(function (p) { return p.id === petId && p.userId === req.userId; });
+  if (!pet) return res.json({ code: -1, msg: '宠物不存在' });
+  var user = db.users.find(function (u) { return u.id === req.userId; });
+  if (!user || user.coins < 5) return res.json({ code: -1, msg: '金币不足' });
+  user.coins -= 5;
+  pet.xp = (pet.xp || 0) + 10;
+  var leveledUp = false;
+  if (pet.xp >= pet.level * 50) {
+    pet.xp = 0;
+    pet.level++;
+    leveledUp = true;
+  }
+  saveDB(db);
+  return res.json({ code: 0, data: { xp: pet.xp, level: pet.level, leveledUp: leveledUp, coins: user.coins } });
+});
+app.post('/api/pets/:id/rename', authMiddleware, function (req, res) {
+  var petId = parseInt(req.params.id);
+  var pet = db.pets.find(function (p) { return p.id === petId && p.userId === req.userId; });
+  if (!pet) return res.json({ code: -1, msg: '宠物不存在' });
+  var newName = (req.body.name || '').trim();
+  if (!newName) return res.json({ code: -1, msg: '名字不能为空' });
+  pet.name = newName;
+  saveDB(db);
+  return res.json({ code: 0, data: { name: pet.name } });
+});
 app.get('/api/badges', authMiddleware, function (req, res) {
   var all = [{ key: 'first', emoji: '🌱', name: '初出茅庐' }, { key: 'second', emoji: '⭐', name: '首次完成' },
     { key: 'reading', emoji: '📚', name: '阅读达人' }, { key: 'sport', emoji: '🏃', name: '运动健将' },
