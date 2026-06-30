@@ -50,6 +50,10 @@ if (db.tasks.length === 0) {
     { icon: '📚', name: '阅读三十分钟', pinyin: 'yuè dú', desc: '读完一本书或一个故事', pts: 15, review: 'photo', cat: '学习', anim: 'book' },
     { icon: '🦷', name: '认真刷牙洗脸', pinyin: 'rèn zhēn shuā yá', desc: '早晚各一次刷够两分钟', pts: 5, review: 'auto', cat: '习惯', anim: 'tooth' },
     { icon: '🏃', name: '运动二十分钟', pinyin: 'yùn dòng', desc: '跳绳跑步或户外玩耍', pts: 12, review: 'photo', cat: '运动', anim: 'run' },
+    { icon: '🪢', name: '跳绳100个', pinyin: 'tiào shéng', desc: '连续或累计跳够100个', pts: 12, review: 'auto', cat: '运动', anim: 'rope' },
+    { icon: '🏀', name: '拍篮球50下', pinyin: 'pāi lán qiú', desc: '连续拍篮球50下不掉球', pts: 10, review: 'auto', cat: '运动', anim: 'ball' },
+    { icon: '🚴', name: '骑自行车15分钟', pinyin: 'qí zì xíng chē', desc: '在安全的地方骑够15分钟', pts: 15, review: 'confirm', cat: '运动', anim: 'bike' },
+    { icon: '🤸', name: '做操跳舞10分钟', pinyin: 'zuò cāo tiào wǔ', desc: '跟着音乐运动跳起来', pts: 8, review: 'auto', cat: '运动', anim: 'dance' },
     { icon: '📝', name: '完成作业', pinyin: 'wán chéng zuò yè', desc: '认真做完今天的作业', pts: 20, review: 'photo', cat: '学习', anim: 'write' },
     { icon: '🍳', name: '帮厨小帮手', pinyin: 'bāng chú', desc: '帮爸爸妈妈准备一顿饭', pts: 18, review: 'confirm', cat: '家务', anim: 'cook' },
     { icon: '🥗', name: '自己收拾书包', pinyin: 'zì jǐ shōu shi', desc: '按课表整理好明天书本', pts: 6, review: 'photo', cat: '习惯', anim: 'bag' },
@@ -107,8 +111,7 @@ app.post('/api/auth/register', function (req, res) {
   };
   db.users.push(user);
 
-  // Mark onboarding done (register IS the onboarding)
-  user.onboarding_done = true;
+  // onboarding_done stays false until parent completes setup
 
   // Copy seed tasks
   db.tasks.filter(function (t) { return t.userId === 0; }).forEach(function (t) {
@@ -122,7 +125,7 @@ app.post('/api/auth/register', function (req, res) {
   saveDB(db);
 
   var token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: '30d' });
-  return res.json({ code: 0, data: { token, user: { id: user.id, phone: user.phone, childName: user.child_name, wechatOpenid: '', wechatLinked: false } } });
+  return res.json({ code: 0, data: { token, user: { id: user.id, phone: user.phone, childName: user.child_name, wechatOpenid: '', wechatLinked: false, role: 'parent', onboardingDone: false } } });
 });
 
 app.post('/api/auth/login', function (req, res) {
@@ -135,7 +138,8 @@ app.post('/api/auth/login', function (req, res) {
   return res.json({ code: 0, data: { token, user: {
     id: user.id, phone: user.phone, childName: user.child_name, avatar: user.avatar,
     coins: user.coins, gems: user.gems, currentLevel: user.current_level, currentDay: user.current_day,
-    wechatOpenid: user.wechat_openid || '', wechatLinked: !!user.wechat_openid
+    wechatOpenid: user.wechat_openid || '', wechatLinked: !!user.wechat_openid,
+    role: user.role || 'child', onboardingDone: user.onboarding_done !== false
   } } });
 });
 
@@ -601,8 +605,49 @@ app.get('/api/user/profile', authMiddleware, function (req, res) {
 // ===== Onboarding Complete =====
 app.post('/api/auth/onboard-done', authMiddleware, function (req, res) {
   var user = db.users.find(function (u) { return u.id === req.userId; });
-  if (user) { user.onboarding_done = true; saveDB(db); }
+  if (user) {
+    user.onboarding_done = true;
+    user.role = 'parent';
+    user.parent_name = req.body.parentName || '国王爸爸';
+    saveDB(db);
+  }
   return res.json({ code: 0 });
+});
+
+// ===== Switch Role (parent ↔ child) =====
+app.post('/api/auth/switch-role', authMiddleware, function (req, res) {
+  var user = db.users.find(function (u) { return u.id === req.userId; });
+  if (!user) return res.json({ code: -1, msg: '用户不存在' });
+  var newRole = req.body.role;
+  if (newRole === 'parent') {
+    user.role = 'parent';
+    saveDB(db);
+    return res.json({ code: 0, data: { role: 'parent' } });
+  }
+  if (newRole === 'child') {
+    var childId = parseInt(req.body.childId) || 0;
+    var child = null;
+    if (user.children) {
+      for (var i = 0; i < user.children.length; i++) {
+        if (user.children[i].id === childId) { child = user.children[i]; break; }
+      }
+    }
+    if (!child) return res.json({ code: -1, msg: '孩子不存在' });
+    user.role = 'child';
+    user.activeChild = childId;
+    user.child_name = child.name || '小勇士';
+    user.avatar = child.avatar || '🦊';
+    user.coins = child.coins || 0;
+    user.gems = child.gems || 0;
+    user.xp = child.xp || 0;
+    user.current_level = child.currentLevel || 1;
+    user.current_day = child.currentDay || 1;
+    user.streak = child.streak || 0;
+    user.lastCheckin = child.lastCheckin || null;
+    saveDB(db);
+    return res.json({ code: 0, data: { role: 'child', childId: childId } });
+  }
+  return res.json({ code: -1, msg: '无效的角色' });
 });
 
 // ===== Photo Upload =====

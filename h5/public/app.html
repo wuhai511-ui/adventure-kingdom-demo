@@ -1496,7 +1496,10 @@ function renderAll(){ renderMap(); renderBadges(); renderShop(); renderPets(); u
   loadTasks(); loadUser(); loadProgress(); loadPets(); loadBadges(); loadRewards();
   api('/api/config').then(function(r){ if(r.code===0){ GAME_CFG=r.data; S.levels=r.data.levels||S.levels; S.maxTasksPerDay=r.data.maxTasksPerDay||10; renderMap(); } }); updateLevelDisplay(); loadCheckinStatus(); }
 
-// Boot: 检查是否首次使用
+// Boot: mode=parent detection + onboarding check
+var urlParams = new URLSearchParams(window.location.search);
+var isParentMode = urlParams.get('mode') === 'parent';
+
 api('/api/user/profile').then(function(r){
   if(r.code===0 && r.data.onboardingDone){
     S.role=r.data.avatar||'🦊'; S.name=r.data.childName||'小勇士';
@@ -1505,11 +1508,28 @@ api('/api/user/profile').then(function(r){
     document.getElementById('heroName').textContent=S.name;
     updateHUD();
     document.getElementById('onboard').style.display='none';
-    renderAll(); updateLevelDisplay();
+    if(isParentMode){
+      // Parent enters parent mode directly
+      S.mode = 'parent';
+      applyMode();
+    } else {
+      renderAll(); updateLevelDisplay();
+    }
+  } else {
+    if(isParentMode){
+      // Parent not yet onboarded → redirect to parent setup
+      window.location.href = API_BASE + '/parent-setup.html';
+    } else {
+      document.getElementById('onboard').style.display='flex';
+    }
+  }
+}).catch(function(){
+  if(isParentMode){
+    window.location.href = API_BASE + '/parent-setup.html';
   } else {
     document.getElementById('onboard').style.display='flex';
   }
-}).catch(function(){ document.getElementById('onboard').style.display='flex'; });
+});
 
 // ====== PIN LOCK (家长密码) ======
 var PIN = {

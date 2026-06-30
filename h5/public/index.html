@@ -266,7 +266,8 @@ async function handleSubmit(){
       if(json.code===0){
         localStorage.setItem('token',json.data.token);
         localStorage.setItem('user',JSON.stringify(json.data.user));
-        window.location.href='/adventure-kingdom/app.html';
+        var role = json.data.user.role;
+        window.location.href='/adventure-kingdom/app.html' + (role === 'parent' ? '?mode=parent' : '');
         return;
       }
       if(json.msg==='手机号未注册'){
@@ -294,7 +295,7 @@ async function handleSubmit(){
     if(json.code===0){
       localStorage.setItem('token',json.data.token);
       localStorage.setItem('user',JSON.stringify(json.data.user));
-      window.location.href='/adventure-kingdom/app.html';
+      window.location.href='/adventure-kingdom/app.html?mode=parent';
     }else{
       enableForm();
       showToast(json.msg||'注册失败');
@@ -319,7 +320,7 @@ function showToast(msg){
   setTimeout(function(){t.style.display='none'},2500);
 }
 
-if(localStorage.getItem('token')) window.location.href='/adventure-kingdom/app.html';
+if(localStorage.getItem('token')){ var u=JSON.parse(localStorage.getItem('user')||'{}'); window.location.href='/adventure-kingdom/app.html' + (u.role === 'parent' ? '?mode=parent' : ''); }
 </script>
 </body>
 </html>
