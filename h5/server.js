@@ -120,7 +120,11 @@ app.post('/api/auth/register', function (req, res) {
                 currentLevel: 1, currentDay: todayDay,
                 weekProgress: {1:[0,0,0,0,0,0,0],2:[0,0,0,0,0,0,0],3:[0,0,0,0,0,0,0]},
                 dayDone: {},
-                feedFreeLeft: 3, feedTicketCount: 0 }]
+                feedFreeLeft: 3, feedTicketCount: 0,
+                activeWorld: 0,
+                worldProgress: {preschool:0,chores:0,learning:0,habits:0,sport:0,kindness:0},
+                worldTargets: {preschool:15,chores:25,learning:25,habits:25,sport:20,kindness:15},
+                openWorlds: ['preschool'] }]
   };
   db.users.push(user);
 
@@ -159,12 +163,12 @@ app.post('/api/auth/login', function (req, res) {
 // ===== Task Routes =====
 app.get('/api/tasks', authMiddleware, function (req, res) {
   var tasks = db.tasks.filter(function (t) { return t.userId === req.userId && t.active !== 0; });
-  return res.json({ code: 0, data: tasks.map(function (t) { return { id: t.id, icon: t.icon, name: t.name, pinyin: t.pinyin, desc: t.desc, pts: t.pts, review: t.review, cat: t.cat, anim: t.anim, image: t.image || null }; }) });
+  return res.json({ code: 0, data: tasks.map(function (t) { return { id: t.id, icon: t.icon, name: t.name, pinyin: t.pinyin, desc: t.desc, pts: t.pts, review: t.review, cat: t.cat, anim: t.anim, image: t.image || null, worldTheme: t.worldTheme || null }; }) });
 });
 
 app.post('/api/tasks', authMiddleware, function (req, res) {
   var t = req.body;
-  var task = { id: nextId(), userId: req.userId, icon: t.icon || '📚', name: t.name, pinyin: t.pinyin || '', desc: t.desc || '', pts: t.pts || 5, review: t.review || 'photo', cat: t.cat || '自定义', anim: t.anim || 'bed', active: 1, image: t.image || null, feedTicketReward: parseInt(t.feedTicketReward) || 0 };
+  var task = { id: nextId(), userId: req.userId, icon: t.icon || '📚', name: t.name, pinyin: t.pinyin || '', desc: t.desc || '', pts: t.pts || 5, review: t.review || 'photo', cat: t.cat || '自定义', anim: t.anim || 'bed', active: 1, image: t.image || null, feedTicketReward: parseInt(t.feedTicketReward) || 0, worldTheme: t.worldTheme || null };
   db.tasks.push(task); saveDB(db);
   return res.json({ code: 0, data: { id: task.id } });
 });
@@ -533,11 +537,19 @@ app.get('/api/children', authMiddleware, function (req, res) {
       combo: 0, todayGain: 0, spent: 0,
       currentLevel: user.current_level || 1, currentDay: user.current_day || todayDay,
       weekProgress: {1:[0,0,0,0,0,0,0],2:[0,0,0,0,0,0,0],3:[0,0,0,0,0,0,0]},
-      dayDone: {}, hatched: false, feedFreeLeft: 3, feedTicketCount: 0 }];
+        dayDone: {}, hatched: false, feedFreeLeft: 3, feedTicketCount: 0,
+        activeWorld: 0,
+        worldProgress: {preschool:0,chores:0,learning:0,habits:0,sport:0,kindness:0},
+        worldTargets: {preschool:15,chores:25,learning:25,habits:25,sport:20,kindness:15},
+        openWorlds: ['preschool'] }];
     user.activeChild = 0;
   }
   var summary = user.children.map(function (c) {
-    return { id: c.id, name: c.name, avatar: c.avatar, coins: c.coins, gems: c.gems, level: c.level || 1, hatched: c.hatched !== false };
+    return { id: c.id, name: c.name, avatar: c.avatar, coins: c.coins, gems: c.gems, level: c.level || 1, hatched: c.hatched !== false,
+      activeWorld: c.activeWorld || 0,
+      worldProgress: c.worldProgress || {preschool:0,chores:0,learning:0,habits:0,sport:0,kindness:0},
+      worldTargets: c.worldTargets || {preschool:15,chores:25,learning:25,habits:25,sport:20,kindness:15},
+      openWorlds: c.openWorlds || ['preschool'] };
   });
   return res.json({ code: 0, data: { children: summary, activeChild: user.activeChild || 0 } });
 });
@@ -563,7 +575,11 @@ app.post('/api/children', authMiddleware, function (req, res) {
     weekProgress: {1:[0,0,0,0,0,0,0],2:[0,0,0,0,0,0,0],3:[0,0,0,0,0,0,0]},
     dayDone: {},
     hatched: false,
-    feedFreeLeft: 3, feedTicketCount: 0
+    feedFreeLeft: 3, feedTicketCount: 0,
+    activeWorld: 0,
+    worldProgress: {preschool:0,chores:0,learning:0,habits:0,sport:0,kindness:0},
+    worldTargets: {preschool:15,chores:25,learning:25,habits:25,sport:20,kindness:15},
+    openWorlds: ['preschool']
   };
   user.children.push(child);
   saveDB(db);
@@ -644,6 +660,31 @@ app.delete('/api/children/:id', authMiddleware, function (req, res) {
   return res.json({ code: 0, msg: '已删除' });
 });
 
+// ===== World Config for Child =====
+app.post('/api/children/:id/world-config', authMiddleware, function (req, res) {
+  var user = db.users.find(function (u) { return u.id === req.userId; });
+  if (!user) return res.json({ code: -1, msg: '用户不存在' });
+  if (!user.children) return res.json({ code: -1, msg: '无孩子数据' });
+  var childId = parseInt(req.params.id);
+  var child = null;
+  for (var q = 0; q < user.children.length; q++) {
+    if (user.children[q].id === childId) { child = user.children[q]; break; }
+  }
+  if (!child) return res.json({ code: -1, msg: '孩子不存在' });
+  var b = req.body;
+  if (b.activeWorld !== undefined) child.activeWorld = parseInt(b.activeWorld) || 0;
+  if (b.worldProgress !== undefined) child.worldProgress = b.worldProgress;
+  if (b.worldTargets !== undefined) child.worldTargets = b.worldTargets;
+  if (b.openWorlds !== undefined) child.openWorlds = b.openWorlds;
+  saveDB(db);
+  return res.json({ code: 0, data: {
+    activeWorld: child.activeWorld || 0,
+    worldProgress: child.worldProgress || {preschool:0,chores:0,learning:0,habits:0,sport:0,kindness:0},
+    worldTargets: child.worldTargets || {preschool:15,chores:25,learning:25,habits:25,sport:20,kindness:15},
+    openWorlds: child.openWorlds || ['preschool']
+  } });
+});
+
 // ===== Level Titles =====
 var LEVEL_TITLES = [
   { minLevel: 1, title: "小探险家" },
@@ -664,10 +705,50 @@ var GAME_CONFIG = {
   eggCost: 30,
   defaultRewards: [{ emoji:'📺', name:'看电视30分钟', cost:20 }, { emoji:'🎢', name:'周末游乐园', cost:200 }]
 };
+var WORLD_CONFIG = {
+  preschool: { id: 'preschool', name: '学龄前世界', icon: '🌈', color: '#FF9F43', desc: '适合学龄前小朋友的基础任务',
+    enemies: [{ name: '懒惰虫', emoji: '🐛', hp: 10, atk: 2 },{ name: '邋遢怪', emoji: '👹', hp: 15, atk: 3 },{ name: '拖延龙', emoji: '🐲', hp: 25, atk: 5 }],
+    heroes: [{ name: '时间仙子', emoji: '🧚', quote: '每天进步一点点！' },{ name: '习惯守护者', emoji: '🦸', quote: '好习惯是最棒的魔法！' }],
+    story: { intro: '欢迎来到学龄前世界！这里住着需要帮助的小动物们，完成日常任务就能积攒魔法能量！', boss: '最终BOSS：巨型懒惰虫王——只有最勤奋的小朋友才能打败它！' } },
+  chores: { id: 'chores', name: '家务世界', icon: '🏠', color: '#54A0FF', desc: '帮爸爸妈妈做家务，成为家庭小帮手',
+    enemies: [{ name: '灰尘怪', emoji: '👻', hp: 12, atk: 3 },{ name: '杂乱魔', emoji: '👾', hp: 18, atk: 4 },{ name: '油腻龙', emoji: '🐉', hp: 30, atk: 6 }],
+    heroes: [{ name: '整洁超人', emoji: '🦸‍♂️', quote: '整洁的家是最温暖的地方！' },{ name: '勤劳蜜蜂', emoji: '🐝', quote: '一分辛劳一分收获！' }],
+    story: { intro: '家务世界的居民们被灰尘怪困扰，拿起扫帚和抹布，用勤劳的小手拯救这个世界吧！', boss: '最终BOSS：巨型杂乱章鱼王——只有最会整理的小朋友才能战胜它！' } },
+  learning: { id: 'learning', name: '学习世界', icon: '📚', color: '#A29BFE', desc: '在知识海洋中探险，成为小学霸',
+    enemies: [{ name: '分心怪', emoji: '👀', hp: 14, atk: 3 },{ name: '粗心魔', emoji: '😈', hp: 20, atk: 5 },{ name: '遗忘龙', emoji: '🐲', hp: 35, atk: 7 }],
+    heroes: [{ name: '智慧猫头鹰', emoji: '🦉', quote: '知识就是力量！' },{ name: '聪明博士', emoji: '🧑‍🔬', quote: '每一个好奇都是进步的种子！' }],
+    story: { intro: '知识王国被遗忘龙占领，书本上的字都消失了！快来用智慧和努力恢复知识的光芒！', boss: '最终BOSS：巨大遗忘之龙——只有认真学习的小朋友才能封印它！' } },
+  habits: { id: 'habits', name: '习惯世界', icon: '⭐', color: '#FF6B6B', desc: '养成好习惯，做最棒的小朋友',
+    enemies: [{ name: '邋遢妖', emoji: '👺', hp: 10, atk: 2 },{ name: '懒散怪', emoji: '😴', hp: 16, atk: 4 },{ name: '混乱龙', emoji: '🐲', hp: 28, atk: 5 }],
+    heroes: [{ name: '自律骑士', emoji: '⚔️', quote: '自律让我更自由！' },{ name: '规律精灵', emoji: '🧝', quote: '好习惯是一生最好的礼物！' }],
+    story: { intro: '习惯世界的时间被混沌龙打乱，人们忘记了刷牙洗脸和整理书包。快来恢复秩序吧！', boss: '最终BOSS：混沌时间龙——规律作息的小朋友才能战胜它！' } },
+  sport: { id: 'sport', name: '运动世界', icon: '⚽', color: '#1DD1A1', desc: '挥洒汗水，成为运动小达人',
+    enemies: [{ name: '懒虫怪', emoji: '🦥', hp: 12, atk: 3 },{ name: '疲惫魔', emoji: '😫', hp: 18, atk: 4 },{ name: '沉重龙', emoji: '🐲', hp: 32, atk: 6 }],
+    heroes: [{ name: '闪电侠', emoji: '⚡', quote: '运动让身体更强壮！' },{ name: '活力兔子', emoji: '🐰', quote: '每天运动，活力满满！' }],
+    story: { intro: '运动世界被懒惰诅咒笼罩，所有人都变得懒洋洋的。用你的活力与汗水打破诅咒！', boss: '最终BOSS：巨型懒虫王——坚持不懈运动的小朋友才能击败它！' } },
+  kindness: { id: 'kindness', name: '善良世界', icon: '💖', color: '#FF85A2', desc: '用善良和爱心温暖这个世界',
+    enemies: [{ name: '自私怪', emoji: '👿', hp: 10, atk: 2 },{ name: '冷漠魔', emoji: '🥶', hp: 16, atk: 4 },{ name: '黑暗龙', emoji: '🐲', hp: 28, atk: 5 }],
+    heroes: [{ name: '爱心天使', emoji: '👼', quote: '善良是最美的魔法！' },{ name: '温暖太阳', emoji: '☀️', quote: '你的善良照亮全世界！' }],
+    story: { intro: '善良世界被黑暗龙笼罩，花朵不再绽放。用你的爱心和微笑驱散黑暗吧！', boss: '最终BOSS：黑暗巨龙——充满爱心的小朋友才能感化它！' } }
+};
+
 var CHECKIN_REWARDS = [1, 2, 3, 5, 8, 13, 21];
 
 app.get('/api/config', function (req, res) {
   return res.json({ code: 0, data: GAME_CONFIG });
+});
+
+// ===== World API =====
+app.get('/api/worlds', authMiddleware, function (req, res) {
+  var user = db.users.find(function (u) { return u.id === req.userId; });
+  if (!user) return res.json({ code: -1, msg: '用户不存在' });
+  var child = getActiveChild(user);
+  return res.json({ code: 0, data: {
+    worlds: WORLD_CONFIG,
+    activeWorld: child ? (child.activeWorld || 0) : 0,
+    worldProgress: child ? (child.worldProgress || {preschool:0,chores:0,learning:0,habits:0,sport:0,kindness:0}) : {preschool:0,chores:0,learning:0,habits:0,sport:0,kindness:0},
+    openWorlds: child ? (child.openWorlds || ['preschool']) : ['preschool']
+  } });
 });
 
 // ===== Level Info =====
