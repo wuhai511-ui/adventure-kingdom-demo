@@ -1197,7 +1197,7 @@ function completeTask(){
   var t=S.currentTask; if(!t) return;
   if(t.review==="photo" && !S.photoTaken){ toast("先拍张照片给国王看看哦 📷"); return; }
   if(t.review==="confirm"){ // 提交待审核
-    S.pendingTasks.push({task:t, level:S.currentLevel, day:S.currentDay}); closeTask(); renderParent();
+    S.pendingTasks.push({task:t, level:S.currentLevel, day:S.currentDay, evidence:S.photoUrl||null}); closeTask(); renderParent();
     toast("已提交，等家长审核～ ⏳"); sfxTap(); return; }
   // auto 或 photo：直接完成
   finishTask(t);
@@ -1417,7 +1417,8 @@ function renderPending(){ var l=document.getElementById('pendingList');
   l.innerHTML=''; S.pendingTasks.forEach(function(item,idx){
     var t=item.task;
     var d=document.createElement('div'); d.className='task-row';
-    d.innerHTML='<div class="ic">'+iconTag(t.icon)+'</div><div class="info"><b>'+t.name+'</b><span>+'+t.pts+'🪙 · 第'+item.level+'关第'+item.day+'天 · 宝贝已提交</span></div>';
+    var evUrl=item.evidence||'';
+    d.innerHTML='<div class="ic">'+iconTag(t.icon)+'</div><div class="info"><b>'+t.name+'</b><span>+'+t.pts+'🪙 · 第'+item.level+'关第'+item.day+'天 · 宝贝已提交</span></div>'+(evUrl?'<button class="act pending" data-url="'+evUrl+'" onclick="viewEvidence(this.dataset.url)">📷 证据</button>':'');
     var ok=document.createElement('button'); ok.className='act approve'; ok.textContent='通过'; ok.onclick=function(){ approveTask(idx); };
     var no=document.createElement('button'); no.className='act reject'; no.textContent='退回'; no.onclick=function(){ rejectTask(idx); };
     d.appendChild(ok); d.appendChild(no); l.appendChild(d); }); }
@@ -1426,7 +1427,8 @@ function renderApproved(){ var l=document.getElementById('approvedList');
   l.innerHTML=''; S.approvedTasks.forEach(function(item){
     var t=item.task;
     var d=document.createElement('div'); d.className='task-row';
-    d.innerHTML='<div class="ic">'+iconTag(t.icon)+'</div><div class="info"><b>'+t.name+'</b><span>+'+t.pts+'🪙 · 第'+item.level+'关第'+item.day+'天 · 已通过</span></div><div class="pts">+'+t.pts+'🪙</div>';
+    var evUrl2=item.evidence||'';
+    d.innerHTML='<div class="ic">'+iconTag(t.icon)+'</div><div class="info"><b>'+t.name+'</b><span>+'+t.pts+'🪙 · 第'+item.level+'关第'+item.day+'天 · 已通过</span></div><div class="pts">+'+t.pts+'🪙</div>'+(evUrl2?'<button class="act pending" data-url="'+evUrl2+'" onclick="viewEvidence(this.dataset.url)">📷 证据</button>':'');
     l.appendChild(d); }); }
 function approveTask(idx){ var item=S.pendingTasks[idx]; S.pendingTasks.splice(idx,1); finishTask(item.task); toast("已通过 "+item.task.name+" +"+item.task.pts+"🪙"); }
 function rejectTask(idx){ var item=S.pendingTasks[idx]; S.pendingTasks.splice(idx,1); renderPending(); toast("已退回 "+item.task.name); }
@@ -1882,6 +1884,7 @@ function showPinChangeModal(){
   }).catch(function(){ showPinSetup(); });
 }
 
+function viewEvidence(url){ window.open('/adventure-kingdom'+url,'_blank'); }
 function logout(){
   sfxTap();
   localStorage.removeItem('token');
