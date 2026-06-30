@@ -350,7 +350,7 @@ app.post('/api/pets/hatch', authMiddleware, function (req, res) {
     }
   }
   saveDB(db);
-  return res.json({ code: 0, data: pet, coins: user.coins, hatched: true });
+  return res.json({ code: 0, data: pet, coins: user.coins || 0, hatched: true });
 });
 app.post('/api/pets/:id/feed', authMiddleware, function (req, res) {
   var petId = parseInt(req.params.id);
