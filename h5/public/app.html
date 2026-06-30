@@ -322,6 +322,16 @@ html,body{ height:100%; font-family:"PingFang SC","Microsoft YaHei",system-ui,sa
 .chip-row{ display:flex; flex-wrap:wrap; gap:8px; }
 .chip{ padding:7px 14px; border-radius:20px; background:#F3F4F6; font-size:13px; font-weight:700; color:var(--parent-sub); cursor:pointer; }
 .chip.sel{ background:var(--parent-brand); color:#fff; }
+
+/* Task image upload */
+.img-upload{ border:2px dashed var(--parent-line); border-radius:12px; padding:16px; text-align:center; cursor:pointer; transition:border-color .2s; background:var(--parent-card); }
+.img-upload:hover,.img-upload.drag-over{ border-color:var(--parent-brand); }
+.img-upload-icon{ font-size:32px; display:block; margin-bottom:6px; }
+.img-drop span{ font-size:12px; color:var(--parent-sub); }
+.img-preview{ position:relative; display:inline-block; }
+.img-preview img{ max-width:100%; max-height:160px; border-radius:8px; display:block; }
+.img-del{ position:absolute; top:-6px; right:-6px; width:24px; height:24px; border-radius:50%; background:var(--red); color:#fff; border:none; font-size:14px; cursor:pointer; display:flex; align-items:center; justify-content:center; box-shadow:0 2px 6px rgba(0,0,0,.2); }
+
 .btn-p{ display:block; width:100%; padding:13px; border:none; border-radius:12px; font-size:15px; font-weight:800; color:#fff; background:var(--parent-brand); box-shadow:0 4px 0 var(--parent-brand-d); cursor:pointer; margin-top:10px; }
 .btn-p:active{ transform:translateY(2px); box-shadow:0 2px 0 var(--parent-brand-d); }
 .btn-p.outline{ background:#fff; color:var(--parent-brand); border:1px solid var(--parent-brand); box-shadow:none; }
@@ -562,7 +572,10 @@ html,body{ height:100%; font-family:"PingFang SC","Microsoft YaHei",system-ui,sa
     <!-- Pets (新增) -->
     <div class="screen page" id="pet-screen" style="background:linear-gradient(180deg,#F3E8FF,#FFF)">
       <h2>我的宠物 🐾</h2>
-      <p style="font-size:13px;color:#999;margin-bottom:14px">做任务赚金币，孵化并养成你的小伙伴！</p>
+      <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
+        <span style="background:rgba(255,255,255,.8);padding:6px 12px;border-radius:14px;font-size:12px;font-weight:700;display:inline-flex;align-items:center;gap:4px">🆓 免费喂食：<b id="feedFreeN">3</b>/3次</span>
+        <span style="background:rgba(255,255,255,.8);padding:6px 12px;border-radius:14px;font-size:12px;font-weight:700;display:inline-flex;align-items:center;gap:4px">🎟️ 喂食券：<b id="feedTicketN">0</b>张</span>
+      </div>
       <div id="petList"></div>
       <div class="card" style="margin-top:8px">
         <div style="font-size:14px;font-weight:700;margin-bottom:6px">🥚 未孵化宠物蛋</div>
@@ -656,6 +669,20 @@ html,body{ height:100%; font-family:"PingFang SC","Microsoft YaHei",system-ui,sa
             <div class="chip sel" data-f="daily" onclick="pickFreq(this)">每日</div>
             <div class="chip" data-r="weekly" onclick="pickFreq(this)">每周</div>
             <div class="chip" data-f="once" onclick="pickFreq(this)">一次性</div>
+          </div>
+        </div>
+        <div class="field"><label>喂食券奖励</label><input id="f-feedTicket" type="number" value="0" placeholder="完成此任务额外奖励喂食券"></div>
+        <div class="field"><label>任务配图（可选，800×800以内，2MB以内）</label>
+          <div class="img-upload" id="taskImgUpload" onclick="document.getElementById('taskImgInput').click()">
+            <div class="img-drop" id="taskImgDrop">
+              <input type="file" id="taskImgInput" accept="image/jpeg,image/png,image/webp" style="display:none" onchange="onTaskImagePicked(this)">
+              <span class="img-upload-icon" id="taskImgIcon">🖼️</span>
+              <span id="taskImgText">点击或拖拽上传任务配图</span>
+            </div>
+            <div class="img-preview" id="taskImgPreview" style="display:none">
+              <img id="taskImgPreviewImg" src="" alt="预览">
+              <button class="img-del" onclick="event.stopPropagation();clearTaskImage()">✕</button>
+            </div>
           </div>
         </div>
         <button class="btn-p" onclick="createTask()">发布任务</button>
@@ -876,7 +903,7 @@ async function api(url, opts){ opts=opts||{}; opts.headers=opts.headers||{}; opt
   return json; }
 async function loadTasks(){ var r=await api('/api/tasks'); if(r.code===0){ S.tasks=r.data; renderMap(); } }
 async function loadProgress(){ var r=await api('/api/progress?level='+S.currentLevel); if(r.code===0){ S.weekProgress[S.currentLevel]=r.data.weekProgress; S.dayDone=r.data.dayDone; renderMap(); } }
-async function loadUser(){ var r=await api('/api/user/profile'); if(r.code===0){ S.coins=r.data.coins||0; S.gems=r.data.gems||0; S.streak=r.data.streak||0; updateHUD(); } }
+async function loadUser(){ var r=await api('/api/user/profile'); if(r.code===0){ S.coins=r.data.coins||0; S.gems=r.data.gems||0; S.streak=r.data.streak||0; S.feedFreeLeft=r.data.feedFreeLeft!==undefined?r.data.feedFreeLeft:3; S.feedTicketCount=r.data.feedTicketCount||0; updateHUD(); } }
 async function saveComplete(taskId,level,day,evidenceUrl){ await api('/api/tasks/'+taskId+'/complete',{method:'POST',body:{level:level,day:day,evidenceUrl:evidenceUrl}}); }
 async function loadPets(){ var r=await api('/api/pets'); if(r.code===0){ S.pets=r.data; renderPets(); } }
 async function loadBadges(){ var r=await api('/api/badges'); if(r.code===0){ S.badges=r.data; renderBadges(); } }
@@ -892,6 +919,7 @@ var S = {
   mode:"kid", // kid | parent
   role:"🦊", name:"小勇士", coins:0, gems:0, saved:0, goal:200, todayGain:0, spent:0, combo:0, streak:3,
   treasureOpened:false,
+  feedFreeLeft:3, feedTicketCount:0, taskImageFile:null, taskImagePreviewUrl:null,
   // 3关卡 × 每关7天
   levels:[
     {id:1, name:"新手冒险", icon:"🌱", color:"#7FD66E", desc:"第一周·养成好习惯", target:35},
@@ -1141,10 +1169,16 @@ function renderMap(){
     var bg=bgColors[(t.id-1)%bgColors.length];
     html+='<div class="task-card-big'+(isDone?' done':'')+'">';
     // 动画大图区
-    html+='<div class="tc-anim anim-'+(t.anim||'bed')+'">';
-    html+='<div class="bg" style="background:'+bg+'"></div>';
-    html+='<div class="emoji">'+iconTag(t.icon)+'</div>';
-    html+='</div>';
+    if(t.image){
+      html+='<div class="tc-anim">';
+      html+='<div class="emoji"><img src="'+t.image+'" style="width:100%;height:200px;object-fit:contain;display:block;" alt="'+t.name+'"></div>';
+      html+='</div>';
+    } else {
+      html+='<div class="tc-anim anim-'+(t.anim||'bed')+'">';
+      html+='<div class="bg" style="background:'+bg+'"></div>';
+      html+='<div class="emoji">'+iconTag(t.icon)+'</div>';
+      html+='</div>';
+    }
     // 信息区
     html+='<div class="tc-body">';
     html+='<div class="tc-pinyin">'+(t.pinyin||'')+'</div>';
@@ -1374,6 +1408,7 @@ async function doCheckin(){
       CHECKIN_STATUS.streak = r.data.streak || (CHECKIN_STATUS.streak + 1);
       CHECKIN_STATUS.reward = r.data.todayReward || CHECKIN_STATUS.reward;
       if(r.data.coins != null) S.coins = r.data.coins;
+      loadUser().then(function(){ renderPets(); });
       renderCheckinPill();
       updateHUD();
       sfxSuccess();
@@ -1471,8 +1506,16 @@ function depositGem(){ if(S.gems<10){ toast("宝石不够啦，多做任务或�
 
 // ====== PETS (新增) ======
 function renderPets(){ var list=document.getElementById('petList'); list.innerHTML='';
+  var elF=document.getElementById('feedFreeN'); if(elF) elF.textContent=S.feedFreeLeft;
+  var elT=document.getElementById('feedTicketN'); if(elT) elT.textContent=S.feedTicketCount;
+  var hasFree=S.feedFreeLeft>0; var hasTicket=S.feedTicketCount>0;
+  var feedLabel=''; var feedDisabled=false;
+  if(hasFree){ feedLabel='\uD83C\uDF56 \u5582\u98df(\u514d\u8d39x'+S.feedFreeLeft+')'; }
+  else if(hasTicket){ feedLabel='\uD83C\uDF56 \u5582\u98df(\u5238x'+S.feedTicketCount+')'; }
+  else { feedLabel='\u514d\u8d39\u6b21\u6570\u5df2\u7528\u5b8c'; feedDisabled=true; }
+
   S.pets.forEach(function(p,idx){ var d=document.createElement('div'); d.className='pet-card';
-    d.innerHTML='<div class="em" onclick="renamePet('+idx+')">'+pi(p.emoji)+'</div><div class="info"><b>'+p.name+'</b><span>Lv.'+ (p.level||p.lv||1) +' · 经验 '+p.xp+'/100</span><div class="pet-bar"><i style="width:'+p.xp+'%"></i></div></div><div class="lv"><b>'+ (p.level||p.lv||1) +'</b><span>等级</span></div><button class="pet-feed"'+(S.coins<5?' disabled':'')+' onclick="feedPet('+idx+')">🍖 喂食(5🪙)</button>';
+    d.innerHTML='<div class="em" onclick="renamePet('+idx+')">'+pi(p.emoji)+'</div><div class="info"><b>'+p.name+'</b><span>Lv.'+ (p.level||p.lv||1) +' · 经验 '+p.xp+'/100</span><div class="pet-bar"><i style="width:'+p.xp+'%"></i></div></div><div class="lv"><b>'+ (p.level||p.lv||1) +'</b><span>等级</span></div><button class="pet-feed"'+ (feedDisabled?' disabled':'') +' onclick="feedPet('+idx+')">'+feedLabel+'</button>';
     list.appendChild(d); });
   var eggs=document.getElementById('eggList'); eggs.innerHTML='';
   S.eggs.forEach(function(e,idx){ var d=document.createElement('div'); d.className='pet-egg';
@@ -1481,7 +1524,8 @@ function renderPets(){ var list=document.getElementById('petList'); list.innerHT
 }
 function hatchEgg(idx){ sfxTap(); loadPets().then(function(){ saveHatch(); }); }
 function renamePet(idx){ var pet=S.pets[idx]; if(!pet) return; var newName=prompt("\u7ed9\u5ba0\u7269\u8d77\u4e2a\u65b0\u540d\u5b57\u5427:",pet.name); if(!newName||!newName.trim()) return; newName=newName.trim(); if(pet.id){ api("/api/pets/"+pet.id+"/rename",{method:"POST",body:{name:newName}}).then(function(r){ if(r.code===0){ loadPets(); toast("\u6539\u540d\u6210\u529f\uff01"); } }); } else { pet.name=newName; renderPets(); toast("\u6539\u540d\u6210\u529f\uff01"); } }
-function feedPet(idx){ var pet=S.pets[idx]; if(!pet||S.coins<5) return; if(pet.id){ api("/api/pets/"+pet.id+"/feed",{method:"POST"}).then(function(r){ if(r.code===0){ S.coins=r.data.coins||S.coins-5; loadPets(); updateHUD(); sfxCoin(); if(r.data&&r.data.leveledUp){ toast("\uD83C\uDF89 "+pet.name+" \u5347\u7ea7\u5230 Lv."+r.data.level+"\uff01"); } else { toast(pet.name+" \u5403\u5f97\u5f88\u5f00\u5fc3\uff01+\u7ecf\u9a8c"); } } }); } else { S.coins-=5; pet.xp+=10; if(pet.xp>=100){ pet.xp=pet.xp-100; pet.lv=(pet.lv||0)+1; toast("\uD83C\uDF89 "+pet.name+" \u5347\u7ea7\u5230 Lv."+pet.lv+"\uff01"); } else { toast(pet.name+" \u5403\u5f97\u5f88\u5f00\u5fc3\uff01+\u7ecf\u9a8c"); } renderPets(); updateHUD(); sfxCoin(); } }
+function feedPet(idx){ var pet=S.pets[idx]; if(!pet) return; if(S.feedFreeLeft<=0 && S.feedTicketCount<=0){ toast("\u514d\u8d39\u6b21\u6570\u5df2\u7528\u5b8c\uff0c\u5b8c\u6210\u4efb\u52a1\u83b7\u53d6\u5582\u98df\u5238\u5427\uff01"); return; }
+  if(pet.id){ api("/api/pets/"+pet.id+"/feed",{method:"POST"}).then(function(r){ if(r.code===0){ S.coins=r.data.coins||S.coins; S.feedFreeLeft=r.data.feedFreeLeft; S.feedTicketCount=r.data.feedTicketCount; loadPets(); updateHUD(); sfxCoin(); if(r.data&&r.data.leveledUp){ toast("\uD83C\uDF89 "+pet.name+" \u5347\u7ea7\u5230 Lv."+r.data.level+"\uff01"); } else { toast(pet.name+" \u5403\u5f97\u5f88\u5f00\u5fc3\uff01+\u7ecf\u9a8c"); } } }); } else { if(S.feedFreeLeft>0){ S.feedFreeLeft--; } else if(S.feedTicketCount>0){ S.feedTicketCount--; } pet.xp+=10; if(pet.xp>=100){ pet.xp=pet.xp-100; pet.lv=(pet.lv||0)+1; toast("\uD83C\uDF89 "+pet.name+" \u5347\u7ea7\u5230 Lv."+pet.lv+"\uff01"); } else { toast(pet.name+" \u5403\u5f97\u5f88\u5f00\u5fc3\uff01+\u7ecf\u9a8c"); } renderPets(); updateHUD(); sfxCoin(); } }
 
 // ====== BADGES ======
 function renderBadges(){ var g=document.getElementById('badgeGrid'); g.innerHTML='';
@@ -1550,13 +1594,99 @@ function pickReview(el){ document.querySelectorAll('#reviewChips .chip').forEach
 function pickFreq(el){ document.querySelectorAll('#freqChips .chip').forEach(c=>c.classList.remove('sel')); el.classList.add('sel'); S.selectedFreq=el.dataset.f; sfxTap(); }
 function createTask(){ var n=document.getElementById('f-name').value.trim(); if(!n){ toast("请输入任务名称"); return; }
   var d=document.getElementById('f-desc').value.trim(); var p=parseInt(document.getElementById('f-pts').value)||10;
-  S.tasks.push({id:Date.now(),icon:S.selectedIcon,name:n,desc:d||"完成任务",pts:p,review:S.selectedReview});
-  // 清空表单
-  document.getElementById('f-name').value=''; document.getElementById('f-desc').value=''; document.getElementById('f-pts').value=10;
-  renderMap(); toast("任务发布成功: "+n+" ✓"); sfxSuccess();
-  // 同时把新任务加入模板库（UGC）
-  S.templates.push({cat:"自定义",icon:S.selectedIcon,name:n,desc:d,pts:p,review:S.selectedReview});
+  var ft=parseInt(document.getElementById('f-feedTicket').value)||0;
+  var imgUrl=S.taskImagePreviewUrl||null;
+
+  // 如果有图片文件，先上传图片
+  var doCreate=function(imageUrl){
+    var body={icon:S.selectedIcon,name:n,desc:d||"完成任务",pts:p,review:S.selectedReview,feedTicketReward:ft,image:imageUrl||null};
+    api('/api/tasks',{method:'POST',body:body}).then(function(r){
+      if(r.code===0){
+        S.tasks.push({id:r.data.id,icon:S.selectedIcon,name:n,desc:d||"完成任务",pts:p,review:S.selectedReview,image:imageUrl||null});
+        // 清空表单
+        document.getElementById('f-name').value=''; document.getElementById('f-desc').value=''; document.getElementById('f-pts').value=10;
+        document.getElementById('f-feedTicket').value=0;
+        clearTaskImage();
+        renderMap(); toast("任务发布成功: "+n+" ✓"); sfxSuccess();
+        S.templates.push({cat:"自定义",icon:S.selectedIcon,name:n,desc:d,pts:p,review:S.selectedReview});
+      } else {
+        toast(r.msg||"发布失败");
+      }
+    });
+  };
+
+  if(S.taskImageFile){
+    var fd=new FormData(); fd.append('image',S.taskImageFile);
+    // 先创建任务占位以获取ID
+    api('/api/tasks',{method:'POST',body:{icon:S.selectedIcon,name:n,desc:d||"完成任务",pts:p,review:S.selectedReview,feedTicketReward:ft}}).then(function(r){
+      if(r.code===0){
+        var tid=r.data.id;
+        fetch(API_BASE+'/api/tasks/'+tid+'/upload-image',{method:'POST',headers:{'Authorization':'Bearer '+AUTH_TOKEN},body:fd}).then(function(res2){ return res2.json(); }).then(function(j2){
+          if(j2.code===0){
+            S.tasks.push({id:tid,icon:S.selectedIcon,name:n,desc:d||"完成任务",pts:p,review:S.selectedReview,image:j2.data.url});
+            document.getElementById('f-name').value=''; document.getElementById('f-desc').value=''; document.getElementById('f-pts').value=10;
+            document.getElementById('f-feedTicket').value=0;
+            clearTaskImage();
+            renderMap(); toast("任务发布成功: "+n+" ✓"); sfxSuccess();
+            S.templates.push({cat:"自定义",icon:S.selectedIcon,name:n,desc:d,pts:p,review:S.selectedReview});
+          } else {
+            // 任务已创建但图片上传失败，回退
+            S.tasks.push({id:tid,icon:S.selectedIcon,name:n,desc:d||"完成任务",pts:p,review:S.selectedReview,image:null});
+            clearTaskImage();
+            renderMap(); toast("任务发布成功（图片上传失败）:");
+          }
+        }).catch(function(){
+          S.tasks.push({id:tid,icon:S.selectedIcon,name:n,desc:d||"完成任务",pts:p,review:S.selectedReview,image:null});
+          clearTaskImage();
+          renderMap(); toast("任务发布成功:");
+        });
+      } else {
+        toast(r.msg||"发布失败");
+      }
+    });
+  } else {
+    doCreate(imgUrl);
+  }
 }
+
+function onTaskImagePicked(input){
+  var file=input.files[0]; if(!file) return;
+  if(file.size>2*1024*1024){ toast("图片太大了，请小于2MB"); input.value=''; return; }
+  S.taskImageFile=file;
+  S.taskImagePreviewUrl=URL.createObjectURL(file);
+  document.getElementById('taskImgDrop').style.display='none';
+  var prev=document.getElementById('taskImgPreview');
+  prev.style.display='inline-block';
+  document.getElementById('taskImgPreviewImg').src=S.taskImagePreviewUrl;
+  document.getElementById('taskImgIcon').textContent='✅';
+  document.getElementById('taskImgText').textContent='已选择图片';
+}
+
+function clearTaskImage(){
+  S.taskImageFile=null;
+  if(S.taskImagePreviewUrl){ URL.revokeObjectURL(S.taskImagePreviewUrl); S.taskImagePreviewUrl=null; }
+  document.getElementById('taskImgDrop').style.display='';
+  document.getElementById('taskImgPreview').style.display='none';
+  document.getElementById('taskImgPreviewImg').src='';
+  document.getElementById('taskImgIcon').textContent='🖼️';
+  document.getElementById('taskImgText').textContent='点击或拖拽上传任务配图';
+  var input=document.getElementById('taskImgInput');
+  if(input) input.value='';
+}
+
+// 拖拽支持
+(function(){
+  var drop=document.getElementById('taskImgUpload');
+  if(!drop) return;
+  drop.addEventListener('dragover',function(e){ e.preventDefault(); drop.classList.add('drag-over'); });
+  drop.addEventListener('dragleave',function(e){ drop.classList.remove('drag-over'); });
+  drop.addEventListener('drop',function(e){ e.preventDefault(); drop.classList.remove('drag-over');
+    var file=e.dataTransfer.files[0]; if(!file) return;
+    var input=document.getElementById('taskImgInput');
+    var dt=new DataTransfer(); dt.items.add(file); input.files=dt.files;
+    onTaskImagePicked(input);
+  });
+})();
 
 // ====== PARENT: Rewards ======
 function pickRwdIcon(el){ document.querySelectorAll('#rwdIcPicker .opt').forEach(o=>o.classList.remove('sel')); el.classList.add('sel'); S.selectedRwdIcon=el.dataset.i; sfxTap(); }

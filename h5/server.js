@@ -5,7 +5,9 @@ var bcrypt = require('bcryptjs');
 var path = require('path');
 var fs = require('fs');
 var multer = require('multer');
+var sharp = require('sharp');
 var upload = multer({ dest: 'public/uploads/', limits: { fileSize: 5 * 1024 * 1024 } });
+var taskImageUpload = multer({ dest: 'public/uploads/', limits: { fileSize: 2 * 1024 * 1024 } });
 
 var app = express();
 app.use(cors());
@@ -32,7 +34,7 @@ var DB_PATH = path.join(__dirname, 'data.json');
 // ===== JSON File Database =====
 function loadDB() {
   try { return JSON.parse(fs.readFileSync(DB_PATH, 'utf8')); }
-  catch (e) { return { users: [], tasks: [], records: [], treasures: [], pets: [], badges: [], rewards: [], nextId: 1 }; }
+  catch (e) { return { users: [], tasks: [], records: [], treasures: [], pets: [], badges: [], rewards: [], feedTickets: [], nextId: 1 }; }
 }
 function saveDB(db) { fs.writeFileSync(DB_PATH, JSON.stringify(db, null, 2), 'utf8'); }
 
@@ -40,7 +42,8 @@ var db = loadDB();
 if (!db.users) db.users = []; if (!db.tasks) db.tasks = [];
 if (!db.records) db.records = []; if (!db.treasures) db.treasures = [];
 if (!db.pets) db.pets = []; if (!db.badges) db.badges = [];
-if (!db.rewards) db.rewards = []; if (!db.nextId) db.nextId = 1;
+if (!db.rewards) db.rewards = []; if (!db.feedTickets) db.feedTickets = [];
+if (!db.nextId) db.nextId = 1;
 saveDB(db);
 
 // Seed tasks
@@ -78,6 +81,15 @@ if (db.tasks.length === 0) {
 
 function nextId() { var id = db.nextId; db.nextId++; saveDB(db); return id; }
 
+function getActiveChild(user) {
+  if (!user || !user.children || user.children.length === 0) return null;
+  var activeId = user.activeChild || 0;
+  for (var i = 0; i < user.children.length; i++) {
+    if (user.children[i].id === activeId) return user.children[i];
+  }
+  return user.children[0];
+}
+
 // ===== Auth Middleware =====
 function authMiddleware(req, res, next) {
   var token = (req.headers.authorization || '').replace('Bearer ', '');
@@ -107,7 +119,8 @@ app.post('/api/auth/register', function (req, res) {
                 combo: 0, todayGain: 0, spent: 0,
                 currentLevel: 1, currentDay: todayDay,
                 weekProgress: {1:[0,0,0,0,0,0,0],2:[0,0,0,0,0,0,0],3:[0,0,0,0,0,0,0]},
-                dayDone: {} }]
+                dayDone: {},
+                feedFreeLeft: 3, feedTicketCount: 0 }]
   };
   db.users.push(user);
 
@@ -146,12 +159,12 @@ app.post('/api/auth/login', function (req, res) {
 // ===== Task Routes =====
 app.get('/api/tasks', authMiddleware, function (req, res) {
   var tasks = db.tasks.filter(function (t) { return t.userId === req.userId && t.active !== 0; });
-  return res.json({ code: 0, data: tasks.map(function (t) { return { id: t.id, icon: t.icon, name: t.name, pinyin: t.pinyin, desc: t.desc, pts: t.pts, review: t.review, cat: t.cat, anim: t.anim }; }) });
+  return res.json({ code: 0, data: tasks.map(function (t) { return { id: t.id, icon: t.icon, name: t.name, pinyin: t.pinyin, desc: t.desc, pts: t.pts, review: t.review, cat: t.cat, anim: t.anim, image: t.image || null }; }) });
 });
 
 app.post('/api/tasks', authMiddleware, function (req, res) {
   var t = req.body;
-  var task = { id: nextId(), userId: req.userId, icon: t.icon || '📚', name: t.name, pinyin: t.pinyin || '', desc: t.desc || '', pts: t.pts || 5, review: t.review || 'photo', cat: t.cat || '自定义', anim: t.anim || 'bed', active: 1 };
+  var task = { id: nextId(), userId: req.userId, icon: t.icon || '📚', name: t.name, pinyin: t.pinyin || '', desc: t.desc || '', pts: t.pts || 5, review: t.review || 'photo', cat: t.cat || '自定义', anim: t.anim || 'bed', active: 1, image: t.image || null, feedTicketReward: parseInt(t.feedTicketReward) || 0 };
   db.tasks.push(task); saveDB(db);
   return res.json({ code: 0, data: { id: task.id } });
 });
@@ -160,6 +173,41 @@ app.delete('/api/tasks/:id', authMiddleware, function (req, res) {
   var task = db.tasks.find(function (t) { return t.id === parseInt(req.params.id) && t.userId === req.userId; });
   if (task) { task.active = 0; saveDB(db); }
   return res.json({ code: 0 });
+});
+
+// ===== Task Image Upload =====
+app.post('/api/tasks/:id/upload-image', authMiddleware, taskImageUpload.single('image'), function (req, res) {
+  var file = req.file;
+  if (!file) return res.json({ code: -1, msg: '未上传图片' });
+
+  if (['image/jpeg', 'image/png', 'image/webp'].indexOf(file.mimetype) === -1) {
+    fs.unlinkSync(file.path);
+    return res.json({ code: -1, msg: '不支持的图片格式，仅允许 jpeg/png/webp' });
+  }
+
+  var taskId = parseInt(req.params.id);
+  var task = db.tasks.find(function (t) { return t.id === taskId && t.userId === req.userId; });
+  if (!task) {
+    fs.unlinkSync(file.path);
+    return res.json({ code: -1, msg: '任务不存在' });
+  }
+
+  var ext = path.extname(file.originalname) || '.jpg';
+  var filename = 'taskimg-' + Date.now() + '-' + Math.round(Math.random() * 1E9) + ext;
+  var destDir = path.join(__dirname, 'public', 'uploads', 'task-images');
+  if (!fs.existsSync(destDir)) fs.mkdirSync(destDir, { recursive: true });
+  var destPath = path.join(destDir, filename);
+
+  sharp(file.path)
+    .resize(800, 800, { fit: 'inside', withoutEnlargement: true })
+    .toFile(destPath, function (err) {
+      fs.unlinkSync(file.path);
+      if (err) return res.json({ code: -1, msg: '图片处理失败' });
+      var url = '/uploads/task-images/' + filename;
+      task.image = url;
+      saveDB(db);
+      return res.json({ code: 0, data: { url: url } });
+    });
 });
 
 // ===== Task Completion =====
@@ -190,6 +238,14 @@ app.post('/api/tasks/:id/complete', authMiddleware, function (req, res) {
     user.current_level++;
     leveledUp = true;
   }
+
+  if (task.feedTicketReward && task.feedTicketReward > 0) {
+    var child = getActiveChild(user);
+    if (child) {
+      child.feedTicketCount = (child.feedTicketCount || 0) + task.feedTicketReward;
+    }
+  }
+
   saveDB(db);
   return res.json({ code: 0, data: { pts: task.pts, coins: user.coins, xp: user.xp, currentLevel: user.current_level, xpGain: xpGain, leveledUp: leveledUp } });
 });
@@ -240,6 +296,12 @@ app.post('/api/checkin', authMiddleware, function (req, res) {
     user.streak++;
   } else {
     user.streak = 1;
+  }
+
+  var child = getActiveChild(user);
+  if (child && child.feedResetDate !== today) {
+    child.feedFreeLeft = 3;
+    child.feedResetDate = today;
   }
 
   var reward = CHECKIN_REWARDS[Math.min(user.streak - 1, 6)];
@@ -295,8 +357,26 @@ app.post('/api/pets/:id/feed', authMiddleware, function (req, res) {
   var pet = db.pets.find(function (p) { return p.id === petId && p.userId === req.userId; });
   if (!pet) return res.json({ code: -1, msg: '宠物不存在' });
   var user = db.users.find(function (u) { return u.id === req.userId; });
-  if (!user || user.coins < 5) return res.json({ code: -1, msg: '金币不足' });
-  user.coins -= 5;
+  if (!user) return res.json({ code: -1, msg: '用户不存在' });
+
+  var today = new Date().toISOString().slice(0, 10);
+  var child = getActiveChild(user);
+
+  if (child) {
+    if (child.feedResetDate !== today) {
+      child.feedFreeLeft = 3;
+      child.feedResetDate = today;
+    }
+
+    if (child.feedFreeLeft > 0) {
+      child.feedFreeLeft--;
+    } else if (child.feedTicketCount > 0) {
+      child.feedTicketCount--;
+    } else {
+      return res.json({ code: -1, msg: '免费次数已用完，完成任务获取喂食券吧！' });
+    }
+  }
+
   pet.xp = (pet.xp || 0) + 10;
   var leveledUp = false;
   if (pet.xp >= pet.level * 50) {
@@ -305,7 +385,7 @@ app.post('/api/pets/:id/feed', authMiddleware, function (req, res) {
     leveledUp = true;
   }
   saveDB(db);
-  return res.json({ code: 0, data: { xp: pet.xp, level: pet.level, leveledUp: leveledUp, coins: user.coins } });
+  return res.json({ code: 0, data: { xp: pet.xp, level: pet.level, leveledUp: leveledUp, coins: user.coins, feedFreeLeft: child ? child.feedFreeLeft : 3, feedTicketCount: child ? child.feedTicketCount : 0 } });
 });
 app.post('/api/pets/:id/rename', authMiddleware, function (req, res) {
   var petId = parseInt(req.params.id);
@@ -453,7 +533,7 @@ app.get('/api/children', authMiddleware, function (req, res) {
       combo: 0, todayGain: 0, spent: 0,
       currentLevel: user.current_level || 1, currentDay: user.current_day || todayDay,
       weekProgress: {1:[0,0,0,0,0,0,0],2:[0,0,0,0,0,0,0],3:[0,0,0,0,0,0,0]},
-      dayDone: {}, hatched: false }];
+      dayDone: {}, hatched: false, feedFreeLeft: 3, feedTicketCount: 0 }];
     user.activeChild = 0;
   }
   var summary = user.children.map(function (c) {
@@ -482,7 +562,8 @@ app.post('/api/children', authMiddleware, function (req, res) {
     currentLevel: 1, currentDay: todayDay,
     weekProgress: {1:[0,0,0,0,0,0,0],2:[0,0,0,0,0,0,0],3:[0,0,0,0,0,0,0]},
     dayDone: {},
-    hatched: false
+    hatched: false,
+    feedFreeLeft: 3, feedTicketCount: 0
   };
   user.children.push(child);
   saveDB(db);
@@ -606,15 +687,18 @@ app.get('/api/user/profile', authMiddleware, function (req, res) {
   var u = db.users.find(function (x) { return x.id === req.userId; });
   if (!u) return res.json({ code: -1, msg: '用户不存在' });
   var hatched = true;
-  if (u.children && u.children.length > 0) {
-    var activeChildId = u.activeChild || 0;
-    for (var k = 0; k < u.children.length; k++) {
-      if (u.children[k].id === activeChildId) {
-        hatched = u.children[k].hatched !== false;
-        break;
-      }
+  var child = getActiveChild(u);
+
+  if (child) {
+    hatched = child.hatched !== false;
+    var today = new Date().toISOString().slice(0, 10);
+    if (child.feedResetDate !== today) {
+      child.feedFreeLeft = 3;
+      child.feedResetDate = today;
+      saveDB(db);
     }
   }
+
   return res.json({ code: 0, data: {
     id: u.id, phone: u.phone, childName: u.child_name, avatar: u.avatar,
     coins: u.coins, gems: u.gems, streak: u.streak, xp: u.xp,
@@ -622,7 +706,9 @@ app.get('/api/user/profile', authMiddleware, function (req, res) {
     wechatOpenid: u.wechat_openid || '', wechatLinked: !!u.wechat_openid,
     onboardingDone: u.onboarding_done !== false,
     activeChild: u.activeChild || 0, hatched: hatched,
-    childrenCount: (u.children||[]).length
+    childrenCount: (u.children||[]).length,
+    feedFreeLeft: child ? child.feedFreeLeft : 3,
+    feedTicketCount: child ? child.feedTicketCount : 0
   } });
 });
 
