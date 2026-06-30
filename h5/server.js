@@ -263,9 +263,10 @@ app.get('/api/pets', authMiddleware, function (req, res) {
   return res.json({ code: 0, data: db.pets.filter(function (p) { return p.userId === req.userId; }) });
 });
 app.post('/api/pets/hatch', authMiddleware, function (req, res) {
-  var cost = GAME_CONFIG.eggCost;
+  var free = req.body && req.body.free === true;
+  var cost = free ? 0 : GAME_CONFIG.eggCost;
   var user = db.users.find(function (u) { return u.id === req.userId; });
-  if (!user || user.coins < cost) return res.json({ code: -1, msg: '金币不足，需要' + cost + '金币' });
+  if (!free && (!user || user.coins < cost)) return res.json({ code: -1, msg: '金币不足，需要' + cost + '金币' });
   var pets = ['🐉','🐧','🐰','🐱','🐶','🦊'];
   var names = ['小火龙','冰冰鹅','萌萌兔','小橘猫','旺旺狗','小灵狐'];
   var xps = [60,20,10,5,5,5];
@@ -273,9 +274,21 @@ app.post('/api/pets/hatch', authMiddleware, function (req, res) {
   var idx = db.pets.filter(function (p) { return p.userId === req.userId; }).length % 6;
   var pet = { id: nextId(), userId: req.userId, emoji: pets[idx], name: names[idx], level: lvs[idx], xp: xps[idx] };
   db.pets.push(pet);
-  user.coins -= cost;
+  if (!free) {
+    user.coins -= cost;
+  }
+  // Mark child.hatched = true
+  if (user.children && user.children.length > 0) {
+    var activeChildId = user.activeChild || 0;
+    for (var i = 0; i < user.children.length; i++) {
+      if (user.children[i].id === activeChildId) {
+        user.children[i].hatched = true;
+        break;
+      }
+    }
+  }
   saveDB(db);
-  return res.json({ code: 0, data: pet });
+  return res.json({ code: 0, data: pet, coins: user.coins, hatched: true });
 });
 app.post('/api/pets/:id/feed', authMiddleware, function (req, res) {
   var petId = parseInt(req.params.id);
@@ -440,11 +453,11 @@ app.get('/api/children', authMiddleware, function (req, res) {
       combo: 0, todayGain: 0, spent: 0,
       currentLevel: user.current_level || 1, currentDay: user.current_day || todayDay,
       weekProgress: {1:[0,0,0,0,0,0,0],2:[0,0,0,0,0,0,0],3:[0,0,0,0,0,0,0]},
-      dayDone: {} }];
+      dayDone: {}, hatched: false }];
     user.activeChild = 0;
   }
   var summary = user.children.map(function (c) {
-    return { id: c.id, name: c.name, avatar: c.avatar, coins: c.coins, gems: c.gems, level: c.level || 1 };
+    return { id: c.id, name: c.name, avatar: c.avatar, coins: c.coins, gems: c.gems, level: c.level || 1, hatched: c.hatched !== false };
   });
   return res.json({ code: 0, data: { children: summary, activeChild: user.activeChild || 0 } });
 });
@@ -468,7 +481,8 @@ app.post('/api/children', authMiddleware, function (req, res) {
     combo: 0, todayGain: 0, spent: 0,
     currentLevel: 1, currentDay: todayDay,
     weekProgress: {1:[0,0,0,0,0,0,0],2:[0,0,0,0,0,0,0],3:[0,0,0,0,0,0,0]},
-    dayDone: {}
+    dayDone: {},
+    hatched: false
   };
   user.children.push(child);
   saveDB(db);
@@ -591,13 +605,23 @@ app.get('/api/user/level-info', authMiddleware, function (req, res) {
 app.get('/api/user/profile', authMiddleware, function (req, res) {
   var u = db.users.find(function (x) { return x.id === req.userId; });
   if (!u) return res.json({ code: -1, msg: '用户不存在' });
+  var hatched = true;
+  if (u.children && u.children.length > 0) {
+    var activeChildId = u.activeChild || 0;
+    for (var k = 0; k < u.children.length; k++) {
+      if (u.children[k].id === activeChildId) {
+        hatched = u.children[k].hatched !== false;
+        break;
+      }
+    }
+  }
   return res.json({ code: 0, data: {
     id: u.id, phone: u.phone, childName: u.child_name, avatar: u.avatar,
     coins: u.coins, gems: u.gems, streak: u.streak, xp: u.xp,
     currentLevel: u.current_level, currentDay: u.current_day,
     wechatOpenid: u.wechat_openid || '', wechatLinked: !!u.wechat_openid,
     onboardingDone: u.onboarding_done !== false,
-    activeChild: u.activeChild || 0,
+    activeChild: u.activeChild || 0, hatched: hatched,
     childrenCount: (u.children||[]).length
   } });
 });
