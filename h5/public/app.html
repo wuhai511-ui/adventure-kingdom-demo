@@ -477,6 +477,57 @@ html,body{ height:100%; font-family:"PingFang SC","Microsoft YaHei",system-ui,sa
 .ld-task .t-status.can:active{ transform:translateY(1px); box-shadow:0 1px 0 #8B6914; }
 .ld-task .t-status.locked{ background:rgba(0,0,0,.06); color:#aaa; cursor:default; }
 
+/* ===== World Detail Modal ===== */
+#world-detail-modal{ z-index:96; }
+.world-detail-card{ background:linear-gradient(170deg,var(--paper) 0%,var(--parchment) 100%); border-radius:24px; padding:0 0 20px; max-width:370px; width:92%; max-height:85vh; overflow-y:auto; box-shadow:0 16px 48px rgba(44,24,16,.35); animation:hatchSlideUp .4s cubic-bezier(.2,.9,.3,1.2); position:relative; }
+.world-detail-card .modal-close{ position:absolute; top:12px; right:12px; width:32px; height:32px; border:none; border-radius:50%; background:rgba(255,255,255,.85); font-size:16px; color:var(--ink-soft); cursor:pointer; display:flex; align-items:center; justify-content:center; z-index:2; box-shadow:0 2px 8px rgba(0,0,0,.1); }
+.world-cover-area{ height:150px; display:flex; align-items:center; justify-content:center; font-size:80px; position:relative; overflow:hidden; border-radius:24px 24px 0 0; }
+.world-detail-card h2{ font-size:20px; font-weight:900; color:var(--ink); margin:4px 20px 2px; }
+.world-detail-card .wd-desc{ font-size:13px; color:var(--ink-soft); margin:0 20px 10px; line-height:1.6; }
+.wd-entities{ padding:0 20px; margin-bottom:8px; }
+.wd-entities h4{ font-size:12px; font-weight:800; color:var(--ink); margin-bottom:6px; }
+.wd-entity-row{ display:flex; flex-wrap:wrap; gap:6px; }
+.wd-entity-chip{ display:flex; align-items:center; gap:4px; padding:5px 10px; border-radius:14px; font-size:11px; font-weight:700; }
+.wd-entity-chip.enemy{ background:rgba(224,123,110,.12); color:var(--red); }
+.wd-entity-chip.hero{ background:rgba(107,143,94,.12); color:var(--green); }
+.wd-entity-chip .e-icon{ font-size:16px; }
+.world-progress{ padding:0 20px 10px; }
+.world-progress .wd-bar-inner{ height:8px; background:rgba(44,24,16,.08); border-radius:4px; overflow:hidden; margin-bottom:4px; }
+.world-progress .wd-bar-inner i{ display:block; height:100%; background:linear-gradient(90deg,#7CE3FF,#5FC97A); border-radius:4px; transition:width .6s; }
+.world-progress > span{ font-size:11px; color:var(--ink-soft); font-weight:700; }
+
+.wd-section{ padding:0 20px; margin-bottom:12px; }
+.wd-section h4{ font-size:13px; font-weight:800; color:var(--ink); margin-bottom:8px; display:flex; align-items:center; gap:5px; }
+.wd-story{ font-size:13px; color:var(--ink-soft); line-height:1.7; padding:12px; background:rgba(242,232,213,.4); border-radius:12px; }
+
+.wd-task{ display:flex; align-items:center; gap:10px; padding:10px 12px; background:rgba(242,232,213,.4); border-radius:12px; margin-bottom:6px; }
+.wd-task .t-ic{ width:34px; height:34px; border-radius:10px; background:#F3F4F6; display:flex; align-items:center; justify-content:center; font-size:20px; flex:none; }
+.wd-task .t-info{ flex:1; min-width:0; }
+.wd-task .t-info b{ font-size:13px; font-weight:800; color:var(--ink); display:block; }
+.wd-task .t-info span{ font-size:11px; color:var(--ink-soft); }
+.wd-task .t-pts{ font-size:13px; font-weight:800; color:var(--gold-d); flex:none; margin-right:4px; }
+.wd-task .t-status{ font-size:11px; font-weight:700; padding:5px 10px; border-radius:10px; flex:none; white-space:nowrap; cursor:pointer; border:none; }
+.wd-task .t-status.done{ background:#d4edda; color:#155724; cursor:default; }
+.wd-task .t-status.can{ background:linear-gradient(160deg,var(--gold),#B8861F); color:#fff; box-shadow:0 2px 0 #8B6914; }
+.wd-task .t-status.can:active{ transform:translateY(1px); box-shadow:0 1px 0 #8B6914; }
+.wd-task .t-status.locked{ background:rgba(0,0,0,.06); color:#aaa; cursor:default; }
+
+/* ===== World Config Toggle (parent account) ===== */
+.world-config-modal{ z-index:97; }
+.world-cfg-card{ background:linear-gradient(170deg,var(--parent-card) 0%,var(--parchment) 100%); border-radius:24px; padding:28px 24px 24px; max-width:340px; width:90%; max-height:80vh; overflow-y:auto; box-shadow:0 16px 48px rgba(44,24,16,.35); animation:hatchSlideUp .4s cubic-bezier(.2,.9,.3,1.2); position:relative; }
+.world-cfg-card h3{ font-size:18px; font-weight:900; color:var(--parent-ink); margin-bottom:16px; text-align:center; }
+.world-cfg-row{ display:flex; align-items:center; gap:12px; padding:12px; border-radius:12px; margin-bottom:8px; background:var(--parent-card); border:1px solid var(--parent-line); }
+.world-cfg-row .wc-icon{ width:44px; height:44px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:24px; flex:none; }
+.world-cfg-row .wc-info{ flex:1; }
+.world-cfg-row .wc-info b{ display:block; font-size:14px; font-weight:800; color:var(--parent-ink); }
+.world-cfg-row .wc-info span{ font-size:11px; color:var(--parent-sub); }
+.world-cfg-toggle{ position:relative; width:48px; height:28px; border-radius:14px; border:none; cursor:pointer; transition:background .3s; flex:none; }
+.world-cfg-toggle.on{ background:var(--parent-brand); }
+.world-cfg-toggle.off{ background:#ccc; }
+.world-cfg-toggle:after{ content:''; position:absolute; width:22px; height:22px; border-radius:50%; background:#fff; top:3px; transition:left .3s; box-shadow:0 1px 3px rgba(0,0,0,.2); }
+.world-cfg-toggle.on:after{ left:23px; }
+.world-cfg-toggle.off:after{ left:3px; }
+
 /* Compact week calendar in modal */
 .ld-week{ display:flex; gap:4px; }
 .ld-week .ld-day{ flex:1; text-align:center; padding:7px 0; border-radius:10px; font-size:10px; font-weight:700; background:rgba(242,232,213,.5); }
@@ -701,6 +752,16 @@ html,body{ height:100%; font-family:"PingFang SC","Microsoft YaHei",system-ui,sa
             <div class="chip" data-f="once" onclick="pickFreq(this)">一次性</div>
           </div>
         </div>
+        <div class="field"><label>所属世界</label>
+          <select id="f-worldTheme" style="width:100%;padding:11px 12px;border:1px solid var(--parent-line);border-radius:10px;font-size:14px;font-family:inherit;background:#fff;color:var(--parent-ink);">
+            <option value="preschool">🌈 学龄前世界</option>
+            <option value="chores">🏠 家务世界</option>
+            <option value="learning">📚 学习世界</option>
+            <option value="habits">⭐ 习惯世界</option>
+            <option value="sport">⚽ 运动世界</option>
+            <option value="kindness">💖 善良世界</option>
+          </select>
+        </div>
         <div class="field"><label>喂食券奖励</label><input id="f-feedTicket" type="number" value="0" placeholder="完成此任务额外奖励喂食券"></div>
         <div class="field"><label>任务配图（可选，800×800以内，2MB以内）</label>
           <div class="img-upload" id="taskImgUpload" onclick="document.getElementById('taskImgInput').click()">
@@ -777,6 +838,7 @@ html,body{ height:100%; font-family:"PingFang SC","Microsoft YaHei",system-ui,sa
         <h3>👶 孩子管理</h3>
         <div id="childList"></div>
         <button class="btn-p outline" onclick="showAddChildModal()">➕ 添加孩子</button>
+        <button class="btn-p outline" style="margin-top:8px" onclick="showWorldConfigModal()">🗺️ 世界配置</button>
       </div>
 
       <div class="p-card">
@@ -921,6 +983,44 @@ html,body{ height:100%; font-family:"PingFang SC","Microsoft YaHei",system-ui,sa
     </div>
   </div>
 
+  <!-- ===== WORLD DETAIL MODAL (世界详情弹窗) ===== -->
+  <div id="world-detail-modal" class="modal-overlay">
+    <div class="world-detail-card">
+      <button class="modal-close" onclick="closeWorldDetail()">✕</button>
+      <div class="world-cover-area" id="worldCover"></div>
+      <h2 id="worldTitle">世界名称</h2>
+      <p class="wd-desc" id="worldDesc">世界描述...</p>
+      <div class="wd-entities" id="worldEntities"></div>
+      <div class="world-progress">
+        <div class="wd-bar-inner"><i id="worldBar" style="width:0%"></i></div>
+        <span id="worldProgressText">0/25 完成</span>
+      </div>
+      <div class="wd-section">
+        <h4>📖 故事</h4>
+        <div class="wd-story" id="worldStory"></div>
+      </div>
+      <div class="wd-section">
+        <h4>📋 世界任务</h4>
+        <div id="worldTasks"></div>
+      </div>
+      <div style="padding:0 20px">
+        <button class="btn gold" id="worldEnterBtn" onclick="enterWorld()">⚔️ 进入世界</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== WORLD CONFIG MODAL (家长世界配置) ===== -->
+  <div id="world-config-modal" class="modal-overlay world-config-modal">
+    <div class="world-cfg-card">
+      <button class="modal-close" onclick="closeWorldConfig()">✕</button>
+      <h3>🗺️ 世界配置</h3>
+      <div id="worldCfgList"></div>
+      <div style="margin-top:10px">
+        <button class="btn-p" onclick="saveWorldConfig()">保存世界配置</button>
+      </div>
+    </div>
+  </div>
+
 </div>
 
 <script>
@@ -974,31 +1074,31 @@ var S = {
   maxTasksPerDay:10,
   // 任务池（家长发布）—— 每天可从中选，同一任务每天只能完成1次
   tasks:[
-    {id:1, icon:"🛏️", name:"整理床铺", pinyin:"zhěng lǐ chuáng pù", desc:"起床后把被子叠好", pts:5, review:"photo", anim:"bed"},
-    {id:2, icon:"📚", name:"阅读三十分钟", pinyin:"yuè dú sān shí fēn zhōng", desc:"读完一本书或一个故事", pts:15, review:"photo", anim:"book"},
-    {id:3, icon:"🦷", name:"认真刷牙洗脸", pinyin:"rèn zhēn shuā yá xǐ liǎn", desc:"早晚各一次刷够两分钟", pts:5, review:"auto", anim:"tooth"},
-    {id:4, icon:"🏃", name:"运动二十分钟", pinyin:"yùn dòng èr shí fēn zhōng", desc:"跳绳跑步或户外玩耍", pts:12, review:"photo", anim:"run"},
-    {id:5, icon:"📝", name:"完成作业", pinyin:"wán chéng zuò yè", desc:"认真做完今天的作业", pts:20, review:"photo", anim:"write"},
-    {id:6, icon:"🍳", name:"帮厨小帮手", pinyin:"bāng chú xiǎo bāng shǒu", desc:"帮爸爸妈妈准备一顿饭", pts:18, review:"confirm", anim:"cook"},
-    {id:7, icon:"🥗", name:"自己收拾书包", pinyin:"zì jǐ shōu shi shū bāo", desc:"按课表整理好明天书本", pts:6, review:"photo", anim:"bag"},
-    {id:8, icon:"🦴", name:"倒垃圾", pinyin:"dào lā jī", desc:"把家里垃圾打包扔掉", pts:5, review:"auto", anim:"trash"},
-    {id:9, icon:"🧹", name:"整理书桌", pinyin:"zhěng lǐ shū zhuō", desc:"把书本文具归位擦干净", pts:8, review:"photo", anim:"sweep"},
-    {id:10, icon:"🐶", name:"照顾宠物", pinyin:"zhào gù chǒng wù", desc:"给小宠物添食添水", pts:5, review:"auto", anim:"pet"},
-    {id:11, icon:"👕", name:"自己穿衣服", pinyin:"zì jǐ chuān yī fu", desc:"早上自己选衣服穿好", pts:8, review:"photo", anim:"dress"},
-    {id:12, icon:"👟", name:"自己穿鞋子", pinyin:"zì jǐ chuān xié zi", desc:"分清左右脚自己穿", pts:5, review:"photo", anim:"shoe"},
-    {id:13, icon:"🍚", name:"自己吃饭", pinyin:"zì jǐ chī fàn", desc:"自己用小勺子吃饭不洒", pts:8, review:"confirm", anim:"eat"},
-    {id:14, icon:"🧸", name:"玩具送回家", pinyin:"wán jù sòng huí jiā", desc:"玩完玩具收进玩具箱", pts:6, review:"photo", anim:"teddy"},
-    {id:15, icon:"🪥", name:"自己刷牙", pinyin:"zì jǐ shuā yá", desc:"早晚自己挤牙膏刷牙", pts:5, review:"auto", anim:"tooth"},
-    {id:16, icon:"🚽", name:"自己上厕所", pinyin:"zì jǐ shàng cè suǒ", desc:"便后自己冲水洗手", pts:6, review:"auto", anim:"toilet"},
-    {id:17, icon:"🧼", name:"自己洗手", pinyin:"zì jǐ xǐ shǒu", desc:"饭前便后用洗手液洗手", pts:4, review:"auto", anim:"wash"},
-    {id:18, icon:"🩴", name:"帮妈妈拿东西", pinyin:"bāng mā ma ná dōng xi", desc:"帮大人拿拖鞋递遥控器", pts:6, review:"confirm", anim:"carry"},
-    {id:19, icon:"👋", name:"说你好和谢谢", pinyin:"shuō nǐ hǎo hé xiè xiè", desc:"见到人主动打招呼说谢谢", pts:5, review:"auto", anim:"wave"},
-    {id:20, icon:"📖", name:"认真听故事", pinyin:"rèn zhēn tīng gù shì", desc:"安静听完一本绘本说说讲了什么", pts:12, review:"confirm", anim:"read"},
-    {id:21, icon:"🎨", name:"画一幅画", pinyin:"huà yī fú huà", desc:"用水彩笔或蜡笔自由画画", pts:10, review:"photo", anim:"draw"},
-    {id:22, icon:"🎤", name:"唱一首儿歌", pinyin:"chàng yī shǒu ér gē", desc:"完整唱一首学过的儿歌", pts:8, review:"confirm", anim:"sing"},
-    {id:23, icon:"✏️", name:"认识一个汉字", pinyin:"rèn shi yī gè hàn zì", desc:"跟着大人认读一个新汉字", pts:6, review:"confirm", anim:"write"},
-    {id:24, icon:"🧸", name:"自己收拾绘本", pinyin:"zì jǐ shōu shi huì běn", desc:"把看完的绘本放回书架原位", pts:6, review:"photo", anim:"teddy"},
-    {id:25, icon:"😊", name:"不哭闹的一天", pinyin:"bù kū nào de yī tiān", desc:"遇到不开心也好好说话不发脾气", pts:12, review:"confirm", anim:"smile"}
+    {id:1, icon:"🛏️", name:"整理床铺", pinyin:"zhěng lǐ chuáng pù", desc:"起床后把被子叠好", pts:5, review:"photo", anim:"bed", worldTheme:"chores"},
+    {id:2, icon:"📚", name:"阅读三十分钟", pinyin:"yuè dú sān shí fēn zhōng", desc:"读完一本书或一个故事", pts:15, review:"photo", anim:"book", worldTheme:"learning"},
+    {id:3, icon:"🦷", name:"认真刷牙洗脸", pinyin:"rèn zhēn shuā yá xǐ liǎn", desc:"早晚各一次刷够两分钟", pts:5, review:"auto", anim:"tooth", worldTheme:"habits"},
+    {id:4, icon:"🏃", name:"运动二十分钟", pinyin:"yùn dòng èr shí fēn zhōng", desc:"跳绳跑步或户外玩耍", pts:12, review:"photo", anim:"run", worldTheme:"sport"},
+    {id:5, icon:"📝", name:"完成作业", pinyin:"wán chéng zuò yè", desc:"认真做完今天的作业", pts:20, review:"photo", anim:"write", worldTheme:"learning"},
+    {id:6, icon:"🍳", name:"帮厨小帮手", pinyin:"bāng chú xiǎo bāng shǒu", desc:"帮爸爸妈妈准备一顿饭", pts:18, review:"confirm", anim:"cook", worldTheme:"chores"},
+    {id:7, icon:"🥗", name:"自己收拾书包", pinyin:"zì jǐ shōu shi shū bāo", desc:"按课表整理好明天书本", pts:6, review:"photo", anim:"bag", worldTheme:"habits"},
+    {id:8, icon:"🦴", name:"倒垃圾", pinyin:"dào lā jī", desc:"把家里垃圾打包扔掉", pts:5, review:"auto", anim:"trash", worldTheme:"chores"},
+    {id:9, icon:"🧹", name:"整理书桌", pinyin:"zhěng lǐ shū zhuō", desc:"把书本文具归位擦干净", pts:8, review:"photo", anim:"sweep", worldTheme:"habits"},
+    {id:10, icon:"🐶", name:"照顾宠物", pinyin:"zhào gù chǒng wù", desc:"给小宠物添食添水", pts:5, review:"auto", anim:"pet", worldTheme:"kindness"},
+    {id:11, icon:"👕", name:"自己穿衣服", pinyin:"zì jǐ chuān yī fu", desc:"早上自己选衣服穿好", pts:8, review:"photo", anim:"dress", worldTheme:"preschool"},
+    {id:12, icon:"👟", name:"自己穿鞋子", pinyin:"zì jǐ chuān xié zi", desc:"分清左右脚自己穿", pts:5, review:"photo", anim:"shoe", worldTheme:"preschool"},
+    {id:13, icon:"🍚", name:"自己吃饭", pinyin:"zì jǐ chī fàn", desc:"自己用小勺子吃饭不洒", pts:8, review:"confirm", anim:"eat", worldTheme:"preschool"},
+    {id:14, icon:"🧸", name:"玩具送回家", pinyin:"wán jù sòng huí jiā", desc:"玩完玩具收进玩具箱", pts:6, review:"photo", anim:"teddy", worldTheme:"preschool"},
+    {id:15, icon:"🪥", name:"自己刷牙", pinyin:"zì jǐ shuā yá", desc:"早晚自己挤牙膏刷牙", pts:5, review:"auto", anim:"tooth", worldTheme:"habits"},
+    {id:16, icon:"🚽", name:"自己上厕所", pinyin:"zì jǐ shàng cè suǒ", desc:"便后自己冲水洗手", pts:6, review:"auto", anim:"toilet", worldTheme:"habits"},
+    {id:17, icon:"🧼", name:"自己洗手", pinyin:"zì jǐ xǐ shǒu", desc:"饭前便后用洗手液洗手", pts:4, review:"auto", anim:"wash", worldTheme:"habits"},
+    {id:18, icon:"🩴", name:"帮妈妈拿东西", pinyin:"bāng mā ma ná dōng xi", desc:"帮大人拿拖鞋递遥控器", pts:6, review:"confirm", anim:"carry", worldTheme:"kindness"},
+    {id:19, icon:"👋", name:"说你好和谢谢", pinyin:"shuō nǐ hǎo hé xiè xiè", desc:"见到人主动打招呼说谢谢", pts:5, review:"auto", anim:"wave", worldTheme:"kindness"},
+    {id:20, icon:"📖", name:"认真听故事", pinyin:"rèn zhēn tīng gù shì", desc:"安静听完一本绘本说说讲了什么", pts:12, review:"confirm", anim:"read", worldTheme:"preschool"},
+    {id:21, icon:"🎨", name:"画一幅画", pinyin:"huà yī fú huà", desc:"用水彩笔或蜡笔自由画画", pts:10, review:"photo", anim:"draw", worldTheme:"preschool"},
+    {id:22, icon:"🎤", name:"唱一首儿歌", pinyin:"chàng yī shǒu ér gē", desc:"完整唱一首学过的儿歌", pts:8, review:"confirm", anim:"sing", worldTheme:"preschool"},
+    {id:23, icon:"✏️", name:"认识一个汉字", pinyin:"rèn shi yī gè hàn zì", desc:"跟着大人认读一个新汉字", pts:6, review:"confirm", anim:"write", worldTheme:"learning"},
+    {id:24, icon:"🧸", name:"自己收拾绘本", pinyin:"zì jǐ shōu shi huì běn", desc:"把看完的绘本放回书架原位", pts:6, review:"photo", anim:"teddy", worldTheme:"preschool"},
+    {id:25, icon:"😊", name:"不哭闹的一天", pinyin:"bù kū nào de yī tiān", desc:"遇到不开心也好好说话不发脾气", pts:12, review:"confirm", anim:"smile", worldTheme:"kindness"}
   ],
   pendingTasks:[], // 孩子提交待家长审核
   approvedTasks:[],
@@ -1062,7 +1162,9 @@ var S = {
     {cat:"品德",icon:"💬",name:"说一句感谢的话",desc:"对帮助过你的人说谢谢",pts:5,review:"auto"}
   ],
   selectedIcon:"📚", selectedReview:"photo", selectedFreq:"daily", selectedCat:"all",
-  selectedRwdIcon:"📺", gateInput:""
+  selectedRwdIcon:"📺", gateInput:"", selectedWorldTheme:"preschool",
+  worldConfig:{}, worldProgress:{preschool:0,chores:0,learning:0,habits:0,sport:0,kindness:0},
+  openWorlds:["preschool"], activeWorld:0
 };
 
 // ====== AUDIO ======
@@ -1141,34 +1243,48 @@ function goParentTab(el, id){ document.querySelectorAll('.p-page').forEach(p=>p.
   document.querySelectorAll('#nav-parent .tab').forEach(t=>t.classList.remove('active'));
   el.classList.add('active'); sfxTap(); renderParent(); }
 
-// ====== MAP (vertical adventure map) ======
+// ====== MAP (vertical adventure map - 6 worlds) ======
 function renderMap(){
   var box=document.getElementById('map-content'); if(!box) return;
   var html='';
 
   html+='<div class="map-header">';
-  html+='<h2>🗺️ 冒险地图</h2>';
-  html+='<p>第'+S.currentLevel+'关 · 第'+S.currentDay+'天 · 沿着路径完成每日任务</p>';
+  html+='<h2>🗺️ 冒险世界</h2>';
+  html+='<p>第'+(S.activeWorld+1)+'个世界 · 沿着路径探索六大世界</p>';
   html+='</div>';
 
   html+='<div class="map-path">';
 
-  S.levels.forEach(function(l, idx){
-    var wp=S.weekProgress[l.id]||[0,0,0,0,0,0,0];
-    var doneTotal=wp.reduce(function(a,b){return a+b;},0);
-    var pct=Math.min(100, Math.round(doneTotal/l.target*100));
-    var isDone=l.id<S.currentLevel;
-    var isCurrent=l.id===S.currentLevel;
-    var isLocked=l.id>S.currentLevel;
+  var worldKeys = Object.keys(S.worldConfig);
+  if(worldKeys.length===0) worldKeys=['preschool','chores','learning','habits','sport','kindness'];
+  var cfg = S.worldConfig && Object.keys(S.worldConfig).length>0 ? S.worldConfig : {
+    preschool:{id:'preschool',name:'学龄前世界',icon:'🌈',color:'#FF9F43',desc:'适合学龄前小朋友的基础任务',target:15},
+    chores:{id:'chores',name:'家务世界',icon:'🏠',color:'#54A0FF',desc:'帮爸爸妈妈做家务',target:25},
+    learning:{id:'learning',name:'学习世界',icon:'📚',color:'#A29BFE',desc:'在知识海洋中探险',target:25},
+    habits:{id:'habits',name:'习惯世界',icon:'⭐',color:'#FF6B6B',desc:'养成好习惯',target:25},
+    sport:{id:'sport',name:'运动世界',icon:'⚽',color:'#1DD1A1',desc:'挥洒汗水',target:20},
+    kindness:{id:'kindness',name:'善良世界',icon:'💖',color:'#FF85A2',desc:'用善良和爱心温暖世界',target:15}
+  };
 
-    var nodeCls='map-node';
-    if(isDone) nodeCls+=' done';
-    else if(isCurrent) nodeCls+=' current';
-    else if(isLocked) nodeCls+=' locked';
+  var activeWorldKey = worldKeys[S.activeWorld] || worldKeys[0];
 
-    html+='<div class="'+nodeCls+'" onclick="showLevelDetail('+l.id+')">';
+  worldKeys.forEach(function(worldKey, idx){
+    var worldConfig = cfg[worldKey] || {};
+    var isOpen = S.openWorlds.indexOf(worldKey) >= 0;
+    var progress = S.worldProgress[worldKey] || 0;
+    var target = worldConfig.target || 25;
+    var isDone = progress >= target;
+    var isActive = worldKey === activeWorldKey || (isOpen && !isDone && idx===S.activeWorld);
 
-    // SVG progress ring (r=34, circ≈213.63)
+    var pct = Math.min(100, Math.round(progress/target*100));
+    var nodeCls = 'map-node';
+    if(isDone) nodeCls += ' done';
+    else if(isActive) nodeCls += ' current';
+    else if(!isOpen) nodeCls += ' locked';
+
+    html+='<div class="'+nodeCls+'" onclick="showWorldDetail(\''+worldKey+'\')">';
+
+    // SVG progress ring
     var circ=213.63;
     var offset=circ*(1-pct/100);
     html+='<div class="progress-ring">';
@@ -1176,29 +1292,32 @@ function renderMap(){
     html+='<circle cx="40" cy="40" r="34" class="ring-bg"/>';
     html+='<circle cx="40" cy="40" r="34" class="ring-fill" stroke-dasharray="'+circ+' '+circ+'" stroke-dashoffset="'+offset+'"/>';
     html+='</svg>';
-    html+='<div class="ring-inner" style="background:'+l.color+'">'+iconTag(l.icon)+'</div>';
+    html+='<div class="ring-inner" style="background:'+(worldConfig.color||'#FF9F43')+'">'+(worldConfig.icon||'🌈')+'</div>';
     html+='</div>';
 
     // Info block
+    var statusText = isDone ? '已完成' : (isActive ? '活跃中' : (isOpen ? '已开放' : '未解锁'));
     html+='<div class="map-node-info">';
-    html+='<div class="map-node-name">'+l.name+'</div>';
-    html+='<div class="map-node-desc">'+l.desc+'</div>';
-    html+='<div class="map-node-progress">'+doneTotal+'/'+l.target+'</div>';
+    html+='<div class="map-node-name">'+(worldConfig.name||worldKey)+'</div>';
+    html+='<div class="map-node-desc">'+(worldConfig.desc||'')+'</div>';
+    html+='<div class="map-node-progress">'+progress+'/'+target+' · '+statusText+'</div>';
     html+='</div>';
 
     // Status badge
     if(isDone){
-      html+='<div class="map-node-badge done">✓</div>';
-    } else if(isLocked){
+      html+='<div class="map-node-badge done">✅</div>';
+    } else if(!isOpen){
       html+='<div class="map-node-badge locked">🔒</div>';
-    } else if(isCurrent){
+    } else if(isActive){
+      html+='<div class="map-node-badge current">▶</div>';
+    } else {
       html+='<div class="map-node-badge current">▶</div>';
     }
 
     html+='</div>';
 
     // Connector between nodes
-    if(idx<S.levels.length-1){
+    if(idx < worldKeys.length-1){
       html+='<div class="path-connector"></div>';
     }
   });
@@ -1295,6 +1414,10 @@ function finishTask(t){
   S.dayDone[dayKey][t.id]=true;
   S.weekProgress[S.currentLevel][S.currentDay-1]++;
   S.coins+=t.pts; S.todayGain+=t.pts; S.combo++; S.approvedTasks.push({task:t, level:S.currentLevel, day:S.currentDay});
+  // 更新世界进度
+  var wt = t.worldTheme || 'preschool';
+  if(!S.worldProgress[wt]) S.worldProgress[wt]=0;
+  S.worldProgress[wt]++;
   // 同步到API
   saveComplete(t.id, S.currentLevel, S.currentDay, S.photoUrl||null).catch(function(){});
   updateHUD();
@@ -1581,6 +1704,123 @@ function closeLevelDetail(){
   document.getElementById('level-detail-modal').classList.remove('show');
 }
 
+// ====== WORLD DETAIL MODAL (世界详情弹窗) ======
+var S_worldDetailKey = null;
+
+function showWorldDetail(worldKey){
+  var cfg = S.worldConfig && S.worldConfig[worldKey] ? S.worldConfig[worldKey] : null;
+  if(!cfg) return;
+  S_worldDetailKey = worldKey;
+  var isOpen = S.openWorlds.indexOf(worldKey) >= 0;
+  var progress = S.worldProgress[worldKey] || 0;
+  var target = cfg.target || 25;
+  var pct = Math.min(100, Math.round(progress/target*100));
+
+  document.getElementById('worldCover').style.background = cfg.color || '#FF9F43';
+  document.getElementById('worldCover').innerHTML = (cfg.icon||'🌈');
+  document.getElementById('worldTitle').textContent = cfg.name || worldKey;
+  document.getElementById('worldDesc').textContent = cfg.desc || '';
+  document.getElementById('worldBar').style.width = pct+'%';
+  document.getElementById('worldProgressText').textContent = progress+'/'+target+' 完成';
+
+  // Entities section
+  var entHtml = '';
+  if(cfg.enemies && cfg.enemies.length){
+    entHtml += '<h4>👾 敌人</h4><div class="wd-entity-row">';
+    cfg.enemies.forEach(function(e){
+      entHtml += '<div class="wd-entity-chip enemy"><span class="e-icon">'+e.emoji+'</span> '+e.name+'</div>';
+    });
+    entHtml += '</div>';
+  }
+  if(cfg.heroes && cfg.heroes.length){
+    entHtml += '<h4 style="margin-top:8px">🦸 英雄</h4><div class="wd-entity-row">';
+    cfg.heroes.forEach(function(h){
+      entHtml += '<div class="wd-entity-chip hero"><span class="e-icon">'+h.emoji+'</span> '+h.name+(h.quote?' · "'+h.quote+'"':'')+'</div>';
+    });
+    entHtml += '</div>';
+  }
+  document.getElementById('worldEntities').innerHTML = entHtml;
+
+  // Story
+  var storyHtml = (cfg.story && cfg.story.intro) ? cfg.story.intro : '在这个世界里开始你的冒险吧！';
+  if(cfg.story && cfg.story.boss){
+    storyHtml += '<br><br><b>🏆 '+cfg.story.boss+'</b>';
+  }
+  document.getElementById('worldStory').innerHTML = storyHtml;
+
+  // Tasks
+  renderWorldTasks(worldKey);
+
+  // Enter button
+  var btn = document.getElementById('worldEnterBtn');
+  if(!isOpen){
+    btn.textContent = '🔒 尚未解锁';
+    btn.className = 'btn gray';
+    btn.onclick = function(){ toast('这个世界还没解锁哦～完成前面的世界来开启吧！'); };
+  } else {
+    btn.textContent = '⚔️ 进入世界';
+    btn.className = 'btn gold';
+    btn.onclick = function(){ enterWorld(); };
+  }
+
+  document.getElementById('world-detail-modal').classList.add('show');
+  sfxTap();
+}
+
+function renderWorldTasks(worldKey){
+  var el = document.getElementById('worldTasks'); if(!el) return;
+  var isCurrent = (S.openWorlds.indexOf(worldKey) >= 0);
+  var dayKey = S.currentLevel+'_'+S.currentDay;
+  var doneMap = S.dayDone[dayKey]||{};
+  var doneCount = Object.keys(doneMap).length;
+  var worldTasks = S.tasks.filter(function(t){ return t.worldTheme === worldKey; });
+
+  if(worldTasks.length===0){
+    el.innerHTML = '<div style="font-size:13px;color:#999;text-align:center;padding:14px">这个世界还没有任务，去创建吧！</div>';
+    return;
+  }
+
+  var html = '';
+  worldTasks.forEach(function(t){
+    var isDone = !!doneMap[t.id];
+    var canDo = isCurrent && !isDone && doneCount < S.maxTasksPerDay;
+
+    html += '<div class="wd-task">';
+    html += '<div class="t-ic">'+iconTag(t.icon)+'</div>';
+    html += '<div class="t-info"><b>'+t.name+'</b><span>'+t.desc+'</span></div>';
+    html += '<div class="t-pts">+'+t.pts+'🪙</div>';
+
+    if(isDone){
+      html += '<div class="t-status done">✓ 已完成</div>';
+    } else if(canDo){
+      html += '<div class="t-status can" onclick="event.stopPropagation();closeWorldDetail();setTimeout(function(){openTask('+t.id+');},300)">去完成</div>';
+    } else {
+      html += '<div class="t-status locked">未解锁</div>';
+    }
+
+    html += '</div>';
+  });
+  el.innerHTML = html;
+}
+
+function closeWorldDetail(){
+  document.getElementById('world-detail-modal').classList.remove('show');
+  S_worldDetailKey = null;
+}
+
+function enterWorld(){
+  var worldKey = S_worldDetailKey;
+  if(!worldKey) return;
+  var worldKeys = Object.keys(S.worldConfig);
+  var idx = worldKeys.indexOf(worldKey);
+  if(idx >= 0){
+    S.activeWorld = idx;
+  }
+  closeWorldDetail();
+  renderMap();
+  toast('进入 '+(S.worldConfig[worldKey]?S.worldConfig[worldKey].name:worldKey)+'！');
+}
+
 // ====== SAVINGS ======
 function depositGem(){ if(S.gems<10){ toast("宝石不够啦，多做任务或开宝箱赚宝石吧 💎"); return; } S.gems-=10; S.saved+=10; updateHUD();
   var pct=Math.min(100, S.saved/S.goal*100); document.getElementById('jarLiquid').style.height=pct+'%';
@@ -1667,7 +1907,8 @@ function renderTemplates(){ var l=document.getElementById('tmplList'); l.innerHT
     d.innerHTML='<div class="em">'+iconTag(t.icon)+'</div><div class="info"><b>'+t.name+'</b><span>'+t.cat+' · +'+t.pts+'🪙 · '+({photo:"拍照",confirm:"家长确认",auto:"自动"}[t.review])+'</span></div><div class="add">+</div>';
     d.onclick=function(){ addTemplateToTasks(t); }; l.appendChild(d); }); }
 function addTemplateToTasks(t){
-  S.tasks.push({id:Date.now(),icon:t.icon,name:t.name,desc:t.desc,pts:t.pts,review:t.review,anim:t.anim||"bed",pinyin:t.pinyin||""});
+  var wtMap = {'学龄前':'preschool','家务':'chores','学习':'learning','运动':'sport','习惯':'habits','品德':'kindness'};
+  S.tasks.push({id:Date.now(),icon:t.icon,name:t.name,desc:t.desc,pts:t.pts,review:t.review,anim:t.anim||"bed",pinyin:t.pinyin||"",worldTheme:wtMap[t.cat]||'preschool'});
   renderMap(); toast("已添加任务: "+t.name+" ✓"); sfxSuccess(); }
 
 // ====== PARENT: UGC create task ======
@@ -1677,14 +1918,15 @@ function pickFreq(el){ document.querySelectorAll('#freqChips .chip').forEach(c=>
 function createTask(){ var n=document.getElementById('f-name').value.trim(); if(!n){ toast("请输入任务名称"); return; }
   var d=document.getElementById('f-desc').value.trim(); var p=parseInt(document.getElementById('f-pts').value)||10;
   var ft=parseInt(document.getElementById('f-feedTicket').value)||0;
+  var wt = document.getElementById('f-worldTheme').value || 'preschool';
   var imgUrl=S.taskImagePreviewUrl||null;
 
   // 如果有图片文件，先上传图片
   var doCreate=function(imageUrl){
-    var body={icon:S.selectedIcon,name:n,desc:d||"完成任务",pts:p,review:S.selectedReview,feedTicketReward:ft,image:imageUrl||null};
+    var body={icon:S.selectedIcon,name:n,desc:d||"完成任务",pts:p,review:S.selectedReview,feedTicketReward:ft,image:imageUrl||null,worldTheme:wt};
     api('/api/tasks',{method:'POST',body:body}).then(function(r){
       if(r.code===0){
-        S.tasks.push({id:r.data.id,icon:S.selectedIcon,name:n,desc:d||"完成任务",pts:p,review:S.selectedReview,image:imageUrl||null});
+        S.tasks.push({id:r.data.id,icon:S.selectedIcon,name:n,desc:d||"完成任务",pts:p,review:S.selectedReview,image:imageUrl||null,worldTheme:wt});
         // 清空表单
         document.getElementById('f-name').value=''; document.getElementById('f-desc').value=''; document.getElementById('f-pts').value=10;
         document.getElementById('f-feedTicket').value=0;
@@ -1700,12 +1942,12 @@ function createTask(){ var n=document.getElementById('f-name').value.trim(); if(
   if(S.taskImageFile){
     var fd=new FormData(); fd.append('image',S.taskImageFile);
     // 先创建任务占位以获取ID
-    api('/api/tasks',{method:'POST',body:{icon:S.selectedIcon,name:n,desc:d||"完成任务",pts:p,review:S.selectedReview,feedTicketReward:ft}}).then(function(r){
+    api('/api/tasks',{method:'POST',body:{icon:S.selectedIcon,name:n,desc:d||"完成任务",pts:p,review:S.selectedReview,feedTicketReward:ft,worldTheme:wt}}).then(function(r){
       if(r.code===0){
         var tid=r.data.id;
         fetch(API_BASE+'/api/tasks/'+tid+'/upload-image',{method:'POST',headers:{'Authorization':'Bearer '+AUTH_TOKEN},body:fd}).then(function(res2){ return res2.json(); }).then(function(j2){
           if(j2.code===0){
-            S.tasks.push({id:tid,icon:S.selectedIcon,name:n,desc:d||"完成任务",pts:p,review:S.selectedReview,image:j2.data.url});
+            S.tasks.push({id:tid,icon:S.selectedIcon,name:n,desc:d||"完成任务",pts:p,review:S.selectedReview,image:j2.data.url,worldTheme:wt});
             document.getElementById('f-name').value=''; document.getElementById('f-desc').value=''; document.getElementById('f-pts').value=10;
             document.getElementById('f-feedTicket').value=0;
             clearTaskImage();
@@ -1713,7 +1955,7 @@ function createTask(){ var n=document.getElementById('f-name').value.trim(); if(
             S.templates.push({cat:"自定义",icon:S.selectedIcon,name:n,desc:d,pts:p,review:S.selectedReview});
           } else {
             // 任务已创建但图片上传失败，回退
-            S.tasks.push({id:tid,icon:S.selectedIcon,name:n,desc:d||"完成任务",pts:p,review:S.selectedReview,image:null});
+            S.tasks.push({id:tid,icon:S.selectedIcon,name:n,desc:d||"完成任务",pts:p,review:S.selectedReview,image:null,worldTheme:wt});
             clearTaskImage();
             renderMap(); toast("任务发布成功（图片上传失败）:");
           }
@@ -1806,7 +2048,18 @@ var GAME_CFG = {};
 
 function renderAll(){ renderMap(); renderBadges(); renderShop(); renderPets(); updateHUD(); document.getElementById('xpbar').style.width='40%'; document.getElementById('xpText').textContent='40';
   loadTasks(); loadUser(); loadProgress(); loadPets(); loadBadges(); loadRewards();
-  api('/api/config').then(function(r){ if(r.code===0){ GAME_CFG=r.data; S.levels=r.data.levels||S.levels; S.maxTasksPerDay=r.data.maxTasksPerDay||10; renderMap(); } }); updateLevelDisplay(); loadCheckinStatus(); }
+  api('/api/config').then(function(r){ if(r.code===0){ GAME_CFG=r.data; S.levels=r.data.levels||S.levels; S.maxTasksPerDay=r.data.maxTasksPerDay||10; renderMap(); } }); updateLevelDisplay(); loadCheckinStatus(); loadWorlds(); }
+
+async function loadWorlds(){
+  var r = await api("/api/worlds");
+  if(r.code === 0){
+    S.worldConfig = r.data.worlds;
+    S.worldProgress = r.data.worldProgress || {preschool:0,chores:0,learning:0,habits:0,sport:0,kindness:0};
+    S.openWorlds = r.data.openWorlds || ["preschool"];
+    S.activeWorld = r.data.activeWorld || 0;
+    renderMap();
+  }
+}
 
 // Boot: mode=parent detection + onboarding check
 var urlParams = new URLSearchParams(window.location.search);
@@ -2188,6 +2441,94 @@ function pickCamAvatar(el){
   el.classList.add('sel');
   S.camAvatar = el.dataset.a;
   sfxTap();
+}
+
+// ====== WORLD CONFIG (家长世界配置) ======
+var S_worldCfgChildId = null;
+var S_worldCfgOpen = {};
+
+function showWorldConfigModal(){
+  if(!S.children || S.children.length===0){ toast('请先添加孩子'); return; }
+  var child = null;
+  for(var i=0; i<S.children.length; i++){
+    if(S.children[i].id === S.currentChildId){ child = S.children[i]; break; }
+  }
+  if(!child){ toast('请先选择孩子'); return; }
+  S_worldCfgChildId = child.id;
+  // Load current config from API
+  api('/api/worlds').then(function(r){
+    if(r.code===0){
+      S_worldCfgOpen = {};
+      var openWorlds = r.data.openWorlds || ['preschool'];
+      ['preschool','chores','learning','habits','sport','kindness'].forEach(function(k){
+        S_worldCfgOpen[k] = openWorlds.indexOf(k) >= 0;
+      });
+      renderWorldConfig();
+      document.getElementById('world-config-modal').classList.add('show');
+    }
+  }).catch(function(){
+    S_worldCfgOpen = {preschool:true,chores:false,learning:false,habits:false,sport:false,kindness:false};
+    renderWorldConfig();
+    document.getElementById('world-config-modal').classList.add('show');
+  });
+  sfxTap();
+}
+
+function renderWorldConfig(){
+  var el = document.getElementById('worldCfgList');
+  var worlds = [
+    {key:'preschool',icon:'🌈',name:'学龄前世界',color:'#FF9F43'},
+    {key:'chores',icon:'🏠',name:'家务世界',color:'#54A0FF'},
+    {key:'learning',icon:'📚',name:'学习世界',color:'#A29BFE'},
+    {key:'habits',icon:'⭐',name:'习惯世界',color:'#FF6B6B'},
+    {key:'sport',icon:'⚽',name:'运动世界',color:'#1DD1A1'},
+    {key:'kindness',icon:'💖',name:'善良世界',color:'#FF85A2'}
+  ];
+  var html = '';
+  worlds.forEach(function(w){
+    var isOn = S_worldCfgOpen[w.key];
+    html += '<div class="world-cfg-row">';
+    html += '<div class="wc-icon" style="background:'+w.color+'">'+w.icon+'</div>';
+    html += '<div class="wc-info"><b>'+w.name+'</b><span>'+(isOn?'已开放':'已关闭')+'</span></div>';
+    html += '<button class="world-cfg-toggle '+(isOn?'on':'off')+'" onclick="toggleWorldCfg(\''+w.key+'\')"></button>';
+    html += '</div>';
+  });
+  el.innerHTML = html;
+}
+
+function toggleWorldCfg(key){
+  S_worldCfgOpen[key] = !S_worldCfgOpen[key];
+  renderWorldConfig();
+  sfxTap();
+}
+
+function saveWorldConfig(){
+  if(!S_worldCfgChildId) return;
+  var openWorlds = [];
+  for(var k in S_worldCfgOpen){ if(S_worldCfgOpen[k]) openWorlds.push(k); }
+  if(openWorlds.length===0){ toast('至少需要开放一个世界'); return; }
+  sfxTap();
+  api('/api/children/'+S_worldCfgChildId+'/world-config',{
+    method:'POST',
+    body:{openWorlds:openWorlds}
+  }).then(function(r){
+    if(r.code===0){
+      S.openWorlds = openWorlds;
+      S.worldProgress = r.data.worldProgress || S.worldProgress;
+      closeWorldConfig();
+      renderMap();
+      toast('世界配置已保存 ✓');
+      sfxSuccess();
+    } else {
+      toast(r.msg||'保存失败');
+    }
+  }).catch(function(){ toast('网络错误'); });
+}
+
+function closeWorldConfig(){
+  document.getElementById('world-config-modal').classList.remove('show');
+  S_worldCfgChildId = null;
+  S_worldCfgOpen = {};
 }
 
 function submitAddChild(){
