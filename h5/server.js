@@ -4,6 +4,8 @@ var jwt = require('jsonwebtoken');
 var bcrypt = require('bcryptjs');
 var path = require('path');
 var fs = require('fs');
+var multer = require('multer');
+var upload = multer({ dest: 'public/uploads/', limits: { fileSize: 5 * 1024 * 1024 } });
 
 var app = express();
 app.use(cors());
@@ -601,6 +603,49 @@ app.post('/api/auth/onboard-done', authMiddleware, function (req, res) {
   var user = db.users.find(function (u) { return u.id === req.userId; });
   if (user) { user.onboarding_done = true; saveDB(db); }
   return res.json({ code: 0 });
+});
+
+// ===== Photo Upload =====
+var ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+var MAX_FILE_SIZE = 5 * 1024 * 1024;
+
+app.post('/api/upload', authMiddleware, upload.single('photo'), function (req, res) {
+  var file = req.file;
+  var taskId = req.body.taskId ? parseInt(req.body.taskId) : null;
+
+  if (!file) return res.json({ code: -1, msg: '未上传文件' });
+
+  if (ALLOWED_TYPES.indexOf(file.mimetype) === -1) {
+    fs.unlinkSync(file.path);
+    return res.json({ code: -1, msg: '不支持的文件类型，仅允许 jpeg/png/webp' });
+  }
+
+  if (file.size > MAX_FILE_SIZE) {
+    fs.unlinkSync(file.path);
+    return res.json({ code: -1, msg: '文件大小超过5MB限制' });
+  }
+
+  var ext = path.extname(file.originalname) || '.jpg';
+  var filename = Date.now() + '-' + Math.round(Math.random() * 1E9) + ext;
+  var destPath = path.join(__dirname, 'public', 'uploads', filename);
+  fs.renameSync(file.path, destPath);
+  var url = '/uploads/' + filename;
+
+  // Record to records table with evidence
+  if (taskId) {
+    var task = db.tasks.find(function (t) { return t.id === taskId && t.userId === req.userId; });
+    if (task) {
+      var level = req.body.level ? parseInt(req.body.level) : 1;
+      var day = req.body.day ? parseInt(req.body.day) : 1;
+      db.records.push({
+        id: nextId(), userId: req.userId, taskId: taskId, level: level, day: day,
+        time: Date.now(), evidence: url
+      });
+      saveDB(db);
+    }
+  }
+
+  return res.json({ code: 0, data: { url: url, taskId: taskId } });
 });
 
 // ===== SPA fallback =====

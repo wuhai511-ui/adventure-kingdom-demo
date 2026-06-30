@@ -736,7 +736,8 @@ html,body{ height:100%; font-family:"PingFang SC","Microsoft YaHei",system-ui,sa
       <div class="reward-line">完成奖励 <b id="mReward">+15 🪙</b></div>
       <div class="evid" id="mEvid">
         <label>📝 给国王看看你完成的证据（拍张照片）</label>
-        <button class="photo-btn" id="photoBtn" onclick="takePhoto()"><span class="em">📷</span>点击拍照证明</button>
+        <input type="file" id="photoInput" accept="image/*" capture="environment" style="display:none" onchange="uploadPhoto(this)">
+        <label class="photo-btn" id="photoBtn" for="photoInput"><span class="em">📷</span>点击拍照证明</label>
       </div>
       <button class="btn gold" id="doneBtn" onclick="completeTask()">我完成啦! 🎉</button>
     </div>
@@ -827,7 +828,7 @@ async function api(url, opts){ opts=opts||{}; opts.headers=opts.headers||{}; opt
 async function loadTasks(){ var r=await api('/api/tasks'); if(r.code===0){ S.tasks=r.data; renderMap(); } }
 async function loadProgress(){ var r=await api('/api/progress?level='+S.currentLevel); if(r.code===0){ S.weekProgress[S.currentLevel]=r.data.weekProgress; S.dayDone=r.data.dayDone; renderMap(); } }
 async function loadUser(){ var r=await api('/api/user/profile'); if(r.code===0){ S.coins=r.data.coins||0; S.gems=r.data.gems||0; S.streak=r.data.streak||0; updateHUD(); } }
-async function saveComplete(taskId,level,day){ await api('/api/tasks/'+taskId+'/complete',{method:'POST',body:{level:level,day:day}}); }
+async function saveComplete(taskId,level,day,evidenceUrl){ await api('/api/tasks/'+taskId+'/complete',{method:'POST',body:{level:level,day:day,evidenceUrl:evidenceUrl}}); }
 async function loadPets(){ var r=await api('/api/pets'); if(r.code===0){ S.pets=r.data; renderPets(); } }
 async function loadBadges(){ var r=await api('/api/badges'); if(r.code===0){ S.badges=r.data; renderBadges(); } }
 async function loadRewards(){ var r=await api('/api/rewards'); if(r.code===0){ S.rewards=r.data; S.shop=r.data; renderShop(); renderRewardList(); } }
@@ -884,7 +885,7 @@ var S = {
   ],
   pendingTasks:[], // 孩子提交待家长审核
   approvedTasks:[],
-  currentTask:null, photoTaken:false,
+  currentTask:null, photoTaken:false, photoUrl:null,
   weekData:[3,5,4,6,5,7,4], // 模拟本周每日完成数
   pets:[
     {emoji:"🐉", name:"小火龙", lv:3, xp:60, got:true},
@@ -1155,7 +1156,7 @@ function openTask(taskId){ var t=S.tasks.find(function(x){return x.id===taskId;}
   if(!(S.viewLevel===S.currentLevel && S.viewDay===S.currentDay)){ toast("只能做今天的任务哦～点周历的「今天」回来吧！📅"); return; }
   if(isTaskDoneToday(t.id)){ toast("这个任务今天已经做过啦 ✓ 明天再来～"); return; }
   if(todayDoneCount()>=S.maxTasksPerDay){ toast("今天已经完成"+S.maxTasksPerDay+"个任务啦，明天继续！🎉"); return; }
-  S.currentTask=t; S.photoTaken=false;
+  S.currentTask=t; S.photoTaken=false; S.photoUrl=null;
   document.getElementById('mIcon').textContent=t.icon;
   document.getElementById('mTitle').textContent=t.name;
   document.getElementById('mDesc').textContent=t.desc;
@@ -1167,8 +1168,29 @@ function openTask(taskId){ var t=S.tasks.find(function(x){return x.id===taskId;}
     document.getElementById('photoBtn').classList.remove('taken'); document.getElementById('photoBtn').innerHTML='<span class="em">📷</span>点击拍照证明'; }
   document.getElementById('doneBtn').disabled=false;
   document.getElementById('task-modal').classList.add('show'); sfxTap(); }
-function takePhoto(){ S.photoTaken=true; var b=document.getElementById('photoBtn');
-  b.classList.add('taken'); b.innerHTML='<span class="em">✅</span>照片已拍好!'; sfxTap(); }
+async function uploadPhoto(input){
+  var file=input.files[0]; if(!file) return;
+  if(file.size>5*1024*1024){ toast("照片太大了，请小于5MB 📷"); input.value=''; return; }
+  var b=document.getElementById('photoBtn');
+  b.classList.add('taken'); b.innerHTML='<span class="em">⏳</span>上传中...';
+  var fd=new FormData(); fd.append('photo',file); fd.append('taskId',S.currentTask.id);
+  try{
+    var res=await fetch(API_BASE+'/api/upload',{method:'POST',headers:{'Authorization':'Bearer '+AUTH_TOKEN},body:fd});
+    var json=await res.json();
+    if(json.code===0){
+      S.photoTaken=true; S.photoUrl=json.data&&json.data.url||'';
+      b.innerHTML='<span class="em">✅</span>已拍照';
+      toast("照片上传成功！");
+    } else {
+      b.classList.remove('taken'); b.innerHTML='<span class="em">📷</span>点击拍照证明';
+      toast(json.msg||'上传失败，请重试');
+    }
+  }catch(e){
+    b.classList.remove('taken'); b.innerHTML='<span class="em">📷</span>点击拍照证明';
+    toast('上传失败，请检查网络');
+  }
+  input.value='';
+}
 function closeTask(){ document.getElementById('task-modal').classList.remove('show'); updateLevelDisplay(); }
 
 function completeTask(){
@@ -1189,7 +1211,7 @@ function finishTask(t){
   S.weekProgress[S.currentLevel][S.currentDay-1]++;
   S.coins+=t.pts; S.todayGain+=t.pts; S.combo++; S.approvedTasks.push({task:t, level:S.currentLevel, day:S.currentDay});
   // 同步到API
-  saveComplete(t.id, S.currentLevel, S.currentDay).catch(function(){});
+  saveComplete(t.id, S.currentLevel, S.currentDay, S.photoUrl||null).catch(function(){});
   updateHUD();
   updateLevelDisplay();
   celebrate(t);
