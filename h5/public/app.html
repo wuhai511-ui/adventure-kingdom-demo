@@ -48,42 +48,47 @@ html,body{ height:100%; font-family:"PingFang SC","Microsoft YaHei",system-ui,sa
 .screen.active{ display:block; }
 
 /* Kid Map → 关卡+周历+今日任务 */
-#map-screen{ padding-top:90px; padding-bottom:74px; background:linear-gradient(180deg,var(--sky2) 0%,var(--paper) 35%,var(--parchment) 100%); min-height:100%; overflow-y:auto; -webkit-overflow-scrolling:touch; }
+#map-screen{ padding-top:90px; padding-bottom:84px; background:linear-gradient(180deg,#1a3a2a 0%,#2d5a3f 15%,#4a7c59 30%,#7ba587 50%,#b5d6a8 70%,#d4e8d0 100%); min-height:100%; overflow-y:auto; -webkit-overflow-scrolling:touch; position:relative; }
 .cloud{ position:absolute; color:#fff; opacity:.7; font-size:30px; animation:drift linear infinite; pointer-events:none; filter:drop-shadow(0 2px 4px rgba(0,0,0,.04)); }
 @keyframes drift{ from{ transform:translateX(-60px);} to{ transform:translateX(460px);} }
 .season-tag{ position:absolute; top:78px; left:14px; z-index:8; background:rgba(251,247,240,.95); color:var(--ink); padding:5px 12px; border-radius:14px; font-size:12px; font-weight:800; box-shadow:0 2px 8px rgba(44,24,16,.08); border:1px solid rgba(212,168,67,.12); }
 
-/* 关卡进度条 */
-.level-bar{ display:flex; gap:8px; padding:0 4px 14px; }
-.level-node{ flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; cursor:pointer; }
-.level-node .lic{ width:48px; height:48px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:24px; border:3px solid rgba(212,168,67,.2); box-shadow:0 3px 10px rgba(0,0,0,.06); background:rgba(242,232,213,.8); opacity:.5; transition:all .2s; }
-.level-node.current .lic{ opacity:1; transform:scale(1.1); border-color:var(--gold); box-shadow:0 3px 14px rgba(212,168,67,.25); }
-.level-node.done .lic{ opacity:1; }
-.level-node.done .lic::after{ content:"✓"; position:absolute; }
-.level-node .ln{ font-size:10px; font-weight:800; color:var(--ink-soft); text-align:center; }
-.level-node .lp{ width:100%; height:5px; background:rgba(44,24,16,.06); border-radius:3px; overflow:hidden; margin-top:2px; }
-.level-node .lp > i{ display:block; height:100%; border-radius:3px; transition:width .6s; }
+/* ===== Adventure Map (vertical scroll) ===== */
+.map-header{ text-align:center; padding:10px 16px 2px; color:#fff; text-shadow:0 2px 4px rgba(0,0,0,.35); }
+.map-header h2{ font-size:22px; font-weight:900; margin-bottom:2px; }
+.map-header p{ font-size:12px; opacity:.85; margin-top:2px; }
 
-/* 当前关卡卡片 */
-.level-card{ background:linear-gradient(170deg,var(--paper) 0%,var(--parchment) 100%); border-radius:22px; padding:18px; margin:0 4px 14px; box-shadow:0 6px 0 rgba(44,24,16,.05),0 0 0 1px rgba(212,168,67,.08); }
-.level-card .lh{ display:flex; align-items:center; gap:10px; margin-bottom:12px; }
-.level-card .lh .lic{ width:46px; height:46px; border-radius:16px; display:flex; align-items:center; justify-content:center; font-size:26px; box-shadow:inset 0 1px 0 rgba(255,255,255,.5); }
-.level-card .lh .lt b{ font-size:16px; font-weight:900; display:block; color:var(--ink); } .level-card .lh .lt span{ font-size:12px; color:var(--ink-soft); }
-.level-card .lh .lv{ margin-left:auto; text-align:right; } .level-card .lh .lv b{ font-size:22px; font-weight:900; color:var(--gold-d); } .level-card .lh .lv span{ display:block; font-size:10px; color:var(--ink-soft); }
+.map-path{ padding:6px 18px 20px; }
+.map-node{ display:flex; align-items:center; gap:12px; padding:14px; border-radius:20px; background:rgba(255,255,255,.92); box-shadow:0 4px 0 rgba(0,0,0,.08),0 6px 18px rgba(0,0,0,.12); cursor:pointer; position:relative; transition:all .2s; }
+.map-node:active{ transform:scale(.97); }
+.map-node.done{ background:linear-gradient(135deg,#e8f5e9,#c8e6c9); border:2px solid #6b8f5e; }
+.map-node.current{ border:3px solid var(--gold); animation:nodePulse 2s ease-in-out infinite; box-shadow:0 4px 0 rgba(212,168,67,.2),0 6px 24px rgba(212,168,67,.25); }
+@keyframes nodePulse{ 0%,100%{box-shadow:0 4px 0 rgba(212,168,67,.2),0 6px 24px rgba(212,168,67,.25);} 50%{box-shadow:0 4px 0 rgba(212,168,67,.4),0 6px 36px rgba(212,168,67,.55);} }
+.map-node.locked{ opacity:.48; background:rgba(255,255,255,.48); }
+.map-node.locked:active{ transform:none; }
 
-/* 周历7天 */
-.week-cal{ display:flex; gap:5px; margin-bottom:6px; }
-.day-cell{ flex:1; display:flex; flex-direction:column; align-items:center; gap:3px; padding:10px 2px; border-radius:14px; background:rgba(242,232,213,.5); cursor:pointer; transition:all .15s; }
-.day-cell.past{ background:rgba(107,143,94,.1); } .day-cell.today{ background:linear-gradient(160deg,var(--gold-light),var(--gold)); box-shadow:0 4px 14px rgba(212,168,67,.35); transform:scale(1.08); }
-.day-cell.future{ opacity:.35; } .day-cell.sel{ outline:2px solid var(--purple); }
-.day-cell .dn{ font-size:11px; font-weight:800; color:var(--ink-soft); }
-.day-cell .dc{ font-size:14px; font-weight:900; color:var(--ink); } .day-cell.today .dc{ color:#FFFEF9; }
-.day-cell .ds{ font-size:9px; color:var(--ink-soft); } .day-cell.today .ds{ color:rgba(255,255,255,.75); }
-.day-cell .dn{ font-size:11px; font-weight:800; color:var(--ink); }
-.day-cell .dc{ font-size:13px; font-weight:900; }
-.day-cell .ds{ font-size:9px; color:#666; } .day-cell.today .ds{ color:#7A5A12; font-weight:800; }
+.progress-ring{ position:relative; width:64px; height:64px; flex:none; }
+.progress-ring svg{ width:64px; height:64px; transform:rotate(-90deg); }
+.ring-bg{ fill:none; stroke:rgba(0,0,0,.08); stroke-width:5; }
+.ring-fill{ fill:none; stroke-width:5; stroke-linecap:round; stroke:var(--gold); transition:stroke-dashoffset .6s; }
+.map-node.done .ring-fill{ stroke:#6b8f5e; }
+.map-node.current .ring-fill{ stroke:var(--gold); }
+.ring-inner{ position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); width:48px; height:48px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:24px; box-shadow:0 2px 6px rgba(0,0,0,.15); }
+.map-node.locked .ring-inner{ filter:grayscale(.7); opacity:.4; }
 
-/* 今日任务列表 */
+.map-node-info{ flex:1; min-width:0; }
+.map-node-name{ font-size:16px; font-weight:900; color:var(--ink); line-height:1.2; }
+.map-node-desc{ font-size:11px; color:var(--ink-soft); margin-top:2px; }
+.map-node-progress{ font-size:13px; font-weight:800; color:var(--gold-d); margin-top:4px; }
+
+.map-node-badge{ width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:16px; font-weight:900; flex:none; }
+.map-node-badge.done{ background:var(--green); color:#fff; }
+.map-node-badge.locked{ background:rgba(0,0,0,.08); }
+.map-node-badge.current{ color:var(--gold-d); font-size:20px; animation:nodePulse 2s ease-in-out infinite; }
+
+.path-connector{ width:4px; height:34px; margin-left:32px; background:repeating-linear-gradient(to bottom, rgba(255,255,255,.7) 0px, rgba(255,255,255,.7) 8px, transparent 8px, transparent 14px); border-radius:2px; }
+
+/* ===== 今日任务列表 (retained for possible reuse) ===== */
 .today-header{ display:flex; align-items:center; justify-content:space-between; padding:0 4px 10px; }
 .today-header h3{ font-size:16px; font-weight:900; color:var(--ink); } .today-header .cnt{ font-size:13px; font-weight:800; color:var(--gold-d); background:rgba(240,214,138,.3); padding:4px 12px; border-radius:12px; }
 
@@ -447,15 +452,40 @@ html,body{ height:100%; font-family:"PingFang SC","Microsoft YaHei",system-ui,sa
 
 /* ===== Level Detail Modal ===== */
 #level-detail-modal{ z-index:96; }
-.level-detail-card{ background:linear-gradient(170deg,var(--paper) 0%,var(--parchment) 100%); border-radius:24px; padding:0 0 24px; max-width:340px; width:90%; text-align:center; box-shadow:0 16px 48px rgba(44,24,16,.35); overflow:hidden; position:relative; animation:hatchSlideUp .4s cubic-bezier(.2,.9,.3,1.2); }
+.level-detail-card{ background:linear-gradient(170deg,var(--paper) 0%,var(--parchment) 100%); border-radius:24px; padding:0 0 20px; max-width:370px; width:92%; max-height:85vh; overflow-y:auto; box-shadow:0 16px 48px rgba(44,24,16,.35); animation:hatchSlideUp .4s cubic-bezier(.2,.9,.3,1.2); position:relative; }
 .level-detail-card .modal-close{ position:absolute; top:12px; right:12px; width:32px; height:32px; border:none; border-radius:50%; background:rgba(255,255,255,.85); font-size:16px; color:var(--ink-soft); cursor:pointer; display:flex; align-items:center; justify-content:center; z-index:2; box-shadow:0 2px 8px rgba(0,0,0,.1); }
-.level-cover-area{ height:180px; display:flex; align-items:center; justify-content:center; font-size:90px; }
-.level-detail-card h2{ font-size:20px; font-weight:900; color:var(--ink); margin:0 24px 6px; }
-.level-detail-card > p{ font-size:13px; color:var(--ink-soft); margin:0 24px 14px; line-height:1.6; }
-.level-progress{ padding:0 24px 16px; }
-.level-progress .level-bar-inner{ height:8px; background:rgba(44,24,16,.08); border-radius:4px; overflow:hidden; margin-bottom:6px; }
+.level-cover-area{ height:130px; display:flex; align-items:center; justify-content:center; font-size:80px; position:relative; overflow:hidden; }
+.level-detail-card h2{ font-size:18px; font-weight:900; color:var(--ink); margin:0 20px 4px; }
+.level-detail-card > p{ font-size:13px; color:var(--ink-soft); margin:0 20px 12px; line-height:1.6; }
+.level-progress{ padding:0 20px 10px; }
+.level-progress .level-bar-inner{ height:8px; background:rgba(44,24,16,.08); border-radius:4px; overflow:hidden; margin-bottom:4px; }
 .level-progress .level-bar-inner i{ display:block; height:100%; background:linear-gradient(90deg,#7CE3FF,#5FC97A); border-radius:4px; transition:width .6s; }
-.level-progress > span{ font-size:12px; color:var(--ink-soft); font-weight:700; }
+.level-progress > span{ font-size:11px; color:var(--ink-soft); font-weight:700; }
+
+/* Level detail sections */
+.ld-section{ padding:0 20px; margin-bottom:12px; }
+.ld-section h4{ font-size:13px; font-weight:800; color:var(--ink); margin-bottom:8px; display:flex; align-items:center; gap:5px; }
+.ld-task{ display:flex; align-items:center; gap:10px; padding:10px 12px; background:rgba(242,232,213,.4); border-radius:12px; margin-bottom:6px; }
+.ld-task .t-ic{ width:34px; height:34px; border-radius:10px; background:#F3F4F6; display:flex; align-items:center; justify-content:center; font-size:20px; flex:none; }
+.ld-task .t-info{ flex:1; min-width:0; }
+.ld-task .t-info b{ font-size:13px; font-weight:800; color:var(--ink); display:block; }
+.ld-task .t-info span{ font-size:11px; color:var(--ink-soft); }
+.ld-task .t-pts{ font-size:13px; font-weight:800; color:var(--gold-d); flex:none; margin-right:4px; }
+.ld-task .t-status{ font-size:11px; font-weight:700; padding:5px 10px; border-radius:10px; flex:none; white-space:nowrap; cursor:pointer; border:none; }
+.ld-task .t-status.done{ background:#d4edda; color:#155724; cursor:default; }
+.ld-task .t-status.can{ background:linear-gradient(160deg,var(--gold),#B8861F); color:#fff; box-shadow:0 2px 0 #8B6914; }
+.ld-task .t-status.can:active{ transform:translateY(1px); box-shadow:0 1px 0 #8B6914; }
+.ld-task .t-status.locked{ background:rgba(0,0,0,.06); color:#aaa; cursor:default; }
+
+/* Compact week calendar in modal */
+.ld-week{ display:flex; gap:4px; }
+.ld-week .ld-day{ flex:1; text-align:center; padding:7px 0; border-radius:10px; font-size:10px; font-weight:700; background:rgba(242,232,213,.5); }
+.ld-week .ld-day .d-n{ font-size:10px; color:var(--ink-soft); display:block; }
+.ld-week .ld-day .d-c{ font-size:14px; font-weight:900; color:var(--ink); display:block; margin-top:1px; }
+.ld-week .ld-day.today{ background:linear-gradient(160deg,var(--gold-light),var(--gold)); }
+.ld-week .ld-day.today .d-n,.ld-week .ld-day.today .d-c{ color:#fff; }
+.ld-week .ld-day.past .d-c{ color:var(--green); }
+.ld-week .ld-day.future{ opacity:.3; }
 </style>
 </head>
 <body>
@@ -877,7 +907,17 @@ html,body{ height:100%; font-family:"PingFang SC","Microsoft YaHei",system-ui,sa
         <div class="level-bar-inner"><i id="levelBar" style="width:0%"></i></div>
         <span id="levelProgressText">0/35 完成</span>
       </div>
-      <button class="btn gold" onclick="closeLevelDetail()">开始冒险 →</button>
+      <div class="ld-section">
+        <h4>📅 本周进度</h4>
+        <div class="ld-week" id="levelWeekCal"></div>
+      </div>
+      <div class="ld-section">
+        <h4>📋 今日任务</h4>
+        <div id="levelTasks"></div>
+      </div>
+      <div style="padding:0 20px">
+        <button class="btn gold" id="levelStartBtn" onclick="closeLevelDetail()">⚔️ 开始冒险</button>
+      </div>
     </div>
   </div>
 
@@ -1101,113 +1141,71 @@ function goParentTab(el, id){ document.querySelectorAll('.p-page').forEach(p=>p.
   document.querySelectorAll('#nav-parent .tab').forEach(t=>t.classList.remove('active'));
   el.classList.add('active'); sfxTap(); renderParent(); }
 
-// ====== MAP ======
+// ====== MAP (vertical adventure map) ======
 function renderMap(){
   var box=document.getElementById('map-content'); if(!box) return;
-  var vl=S.levels[S.viewLevel-1]; var wp=S.weekProgress[S.viewLevel];
-  var doneTotal=wp.reduce(function(a,b){return a+b;},0);
-  var dayNames=["一","二","三","四","五","六","日"];
-  // 是否正在看"今天"
-  var isTodayView = (S.viewLevel===S.currentLevel && S.viewDay===S.currentDay);
-
   var html='';
-  // 关卡进度条
-  html+='<div class="level-bar" style="margin-top:8px">';
-  S.levels.forEach(function(l){
-    var lwp=S.weekProgress[l.id]||[0,0,0,0,0,0,0]; var lt=lwp.reduce(function(a,b){return a+b;},0);
-    var pct=Math.min(100, Math.round(lt/l.target*100));
-    var cls=l.id<S.currentLevel?'done':(l.id===S.currentLevel?'current':'');
-    if(l.id===S.viewLevel) cls+=' sel';
-    html+='<div class="level-node '+cls+'" onclick="switchLevel('+l.id+')">';
-    html+='<div class="lic" style="background:'+l.color+'">'+iconTag(l.icon)+'</div>';
-    html+='<div class="ln">'+l.name+'</div>';
-    html+='<div class="lp"><i style="width:'+pct+'%;background:'+l.color+'"></i></div>';
+
+  html+='<div class="map-header">';
+  html+='<h2>🗺️ 冒险地图</h2>';
+  html+='<p>第'+S.currentLevel+'关 · 第'+S.currentDay+'天 · 沿着路径完成每日任务</p>';
+  html+='</div>';
+
+  html+='<div class="map-path">';
+
+  S.levels.forEach(function(l, idx){
+    var wp=S.weekProgress[l.id]||[0,0,0,0,0,0,0];
+    var doneTotal=wp.reduce(function(a,b){return a+b;},0);
+    var pct=Math.min(100, Math.round(doneTotal/l.target*100));
+    var isDone=l.id<S.currentLevel;
+    var isCurrent=l.id===S.currentLevel;
+    var isLocked=l.id>S.currentLevel;
+
+    var nodeCls='map-node';
+    if(isDone) nodeCls+=' done';
+    else if(isCurrent) nodeCls+=' current';
+    else if(isLocked) nodeCls+=' locked';
+
+    html+='<div class="'+nodeCls+'" onclick="showLevelDetail('+l.id+')">';
+
+    // SVG progress ring (r=34, circ≈213.63)
+    var circ=213.63;
+    var offset=circ*(1-pct/100);
+    html+='<div class="progress-ring">';
+    html+='<svg viewBox="0 0 80 80">';
+    html+='<circle cx="40" cy="40" r="34" class="ring-bg"/>';
+    html+='<circle cx="40" cy="40" r="34" class="ring-fill" stroke-dasharray="'+circ+' '+circ+'" stroke-dashoffset="'+offset+'"/>';
+    html+='</svg>';
+    html+='<div class="ring-inner" style="background:'+l.color+'">'+iconTag(l.icon)+'</div>';
     html+='</div>';
-  });
-  html+='</div>';
 
-  // 简化关卡卡片
-  var viewDone=wp[S.viewDay-1]||0;
-  var lvlPct=Math.min(100, Math.round(doneTotal/vl.target*100));
-  html+='<div class="level-card" style="cursor:pointer" onclick="showLevelDetail('+vl.id+')">';
-  html+='<div class="lh"><div class="lic" style="background:'+vl.color+'">'+iconTag(vl.icon)+'</div>';
-  html+='<div class="lt"><b>'+vl.name+'</b><span>'+vl.desc+'</span></div>';
-  html+='<div class="lv"><b>'+doneTotal+'/'+vl.target+'</b><span>累计完成</span></div></div>';
-  html+='<div style="padding:0 0 12px"><div style="height:8px;background:rgba(44,24,16,.08);border-radius:4px;overflow:hidden"><i style="display:block;height:100%;width:'+lvlPct+'%;background:linear-gradient(90deg,#7CE3FF,#5FC97A);border-radius:4px"></i></div></div>';
-  html+='<button class="btn gold" style="width:100%" onclick="event.stopPropagation();showLevelDetail('+vl.id+')">点击查看</button>';
-  html+='</div>';
-  // 周历7天（高亮和锁定判断用 currentLevel/currentDay）
-  html+='<div class="week-cal">';
-  for(var d=1;d<=7;d++){
-    var isPast = (S.viewLevel<S.currentLevel) || (S.viewLevel===S.currentLevel && d<S.currentDay);
-    var isToday = (S.viewLevel===S.currentLevel && d===S.currentDay);
-    var isFuture = (S.viewLevel>S.currentLevel) || (S.viewLevel===S.currentLevel && d>S.currentDay);
-    var dcls = isPast?'past':(isToday?'today':'future');
-    if(d===S.viewDay) dcls+=' sel';
-    var dc=wp[d-1]||0;
-    html+='<div class="day-cell '+dcls+'" onclick="switchDay('+d+')">';
-    html+='<div class="dn">周'+dayNames[d-1]+'</div>';
-    html+='<div class="dc">'+dc+'</div>';
-    html+='<div class="ds">'+(isFuture?'待解锁':(isToday?'今天':'已完成'))+'</div>';
+    // Info block
+    html+='<div class="map-node-info">';
+    html+='<div class="map-node-name">'+l.name+'</div>';
+    html+='<div class="map-node-desc">'+l.desc+'</div>';
+    html+='<div class="map-node-progress">'+doneTotal+'/'+l.target+'</div>';
     html+='</div>';
-  }
-  html+='</div>';
 
-  // 任务列表（显示 viewDay 的完成情况）→ 大卡片轮播
-  var dayKey=S.viewLevel+'_'+S.viewDay;
-  var doneMap=S.dayDone[dayKey]||{};
-  var doneCount=Object.keys(doneMap).length;
-  var viewDayLabel = isTodayView?'今天':'第'+S.viewDay+'天';
-  var canDo = isTodayView && doneCount<S.maxTasksPerDay;
-  html+='<div class="today-header"><h3>'+viewDayLabel+'的任务</h3><span class="cnt">'+doneCount+'/'+S.maxTasksPerDay+'</span></div>';
-
-  // 轮播容器
-  html+='<div class="carousel-wrap"><div class="carousel" id="taskCarousel">';
-  S.tasks.forEach(function(t){
-    var isDone=doneMap[t.id];
-    var bgColors=["#FFF3C4","#E0F4FF","#FFE0E0","#E8F5E9","#F3E8FF","#FFF0D0","#E0F7FA","#FFF3E0","#F1F8E9","#FCE4EC"];
-    var bg=bgColors[(t.id-1)%bgColors.length];
-    html+='<div class="task-card-big'+(isDone?' done':'')+'">';
-    // 动画大图区
-    if(t.image){
-      html+='<div class="tc-anim">';
-      html+='<div class="emoji"><img src="'+t.image+'" style="width:100%;height:200px;object-fit:contain;display:block;" alt="'+t.name+'"></div>';
-      html+='</div>';
-    } else {
-      html+='<div class="tc-anim anim-'+(t.anim||'bed')+'">';
-      html+='<div class="bg" style="background:'+bg+'"></div>';
-      html+='<div class="emoji">'+iconTag(t.icon)+'</div>';
-      html+='</div>';
+    // Status badge
+    if(isDone){
+      html+='<div class="map-node-badge done">✓</div>';
+    } else if(isLocked){
+      html+='<div class="map-node-badge locked">🔒</div>';
+    } else if(isCurrent){
+      html+='<div class="map-node-badge current">▶</div>';
     }
-    // 信息区
-    html+='<div class="tc-body">';
-    html+='<div class="tc-pinyin">'+(t.pinyin||'')+'</div>';
-    html+='<div class="tc-name">'+t.name+'</div>';
-    html+='<div class="tc-desc">'+t.desc+'</div>';
-    html+='<div class="tc-foot">';
-    html+='<div class="tc-pts"><span class="coin">🪙</span><span class="v">+'+t.pts+'</span><span class="u">金币</span></div>';
-    if(isDone){ html+='<button class="tc-btn disabled">已完成 ✓</button>'; }
-    else if(!isTodayView){ html+='<button class="tc-btn disabled">仅今天可做</button>'; }
-    else if(doneCount>=S.maxTasksPerDay){ html+='<button class="tc-btn disabled">今日已满</button>'; }
-    else { html+='<button class="tc-btn" onclick="openTask('+t.id+')">去做 →</button>'; }
-    html+='</div></div></div>';
-  });
-  html+='</div>';
-  // 指示器
-  html+='<div class="carousel-dots" id="carouselDots">';
-  S.tasks.forEach(function(t,i){ html+='<div class="dot'+(i===0?' active':'')+'" onclick="scrollToCard('+i+')"></div>'; });
-  html+='</div></div>';
 
-  if(!isTodayView){
-    html+='<div style="text-align:center;font-size:13px;color:#999;padding:6px 10px">📜 这是'+viewDayLabel+'的记录。点周历的"今天"可回到当天做任务～</div>';
-  } else if(doneCount>=S.maxTasksPerDay){
-    html+='<div style="text-align:center;font-size:13px;color:#999;padding:6px 10px">🎉 今天已完成'+S.maxTasksPerDay+'个任务，太棒了！明天继续～</div>';
-  } else {
-    html+='<div style="text-align:center;font-size:12px;color:#aaa;padding:6px 10px">← 左右滑动查看所有任务 →</div>';
-  }
+    html+='</div>';
+
+    // Connector between nodes
+    if(idx<S.levels.length-1){
+      html+='<div class="path-connector"></div>';
+    }
+  });
+
+  html+='</div>'; // map-path
+
   box.innerHTML=html;
-  // 绑定滚动指示器更新
-  setTimeout(bindCarousel,50);
 }
 
 function bindCarousel(){ var c=document.getElementById('taskCarousel'); if(!c) return;
@@ -1479,22 +1477,106 @@ async function doFirstHatch(){
   }
 }
 
-// ====== LEVEL DETAIL MODAL ======
+// ====== LEVEL DETAIL MODAL (extended with task list + week calendar) ======
 function showLevelDetail(levelId){
   var lv=S.levels.find(function(l){ return l.id===levelId; });
   if(!lv) return;
   var wp=S.weekProgress[levelId]||[0,0,0,0,0,0,0];
   var doneTotal=wp.reduce(function(a,b){return a+b;},0);
   var pct=Math.min(100, Math.round(doneTotal/lv.target*100));
+
   document.getElementById('levelCover').style.background=lv.color;
   document.getElementById('levelCover').innerHTML=iconTag(lv.icon);
   document.getElementById('levelTitle').textContent=lv.name;
   document.getElementById('levelStory').textContent=lv.desc;
   document.getElementById('levelBar').style.width=pct+'%';
   document.getElementById('levelProgressText').textContent=doneTotal+'/'+lv.target+' 完成';
+
+  // Render task list for this level
+  renderLevelTasks(levelId);
+
+  // Render compact week calendar
+  renderLevelWeek(levelId);
+
+  // Configure start button
+  var btn=document.getElementById('levelStartBtn');
+  if(levelId>S.currentLevel){
+    btn.textContent='🔒 尚未解锁';
+    btn.className='btn gray';
+    btn.onclick=function(){ toast('前面的关卡还没完成哦～加油！💪'); };
+  } else {
+    btn.textContent='⚔️ 开始冒险';
+    btn.className='btn gold';
+    btn.onclick=function(){ closeLevelDetail(); switchLevel(levelId); };
+  }
+
   document.getElementById('level-detail-modal').classList.add('show');
   sfxTap();
 }
+
+function renderLevelTasks(levelId){
+  var el=document.getElementById('levelTasks'); if(!el) return;
+  var isCurrent=(levelId===S.currentLevel);
+  var isPast=(levelId<S.currentLevel);
+  var dayKey=levelId+'_'+S.currentDay;
+  var doneMap=S.dayDone[dayKey]||{};
+  var doneCount=Object.keys(doneMap).length;
+
+  var html='';
+  S.tasks.forEach(function(t){
+    var isDone, canDo;
+    if(isPast){
+      isDone=true; canDo=false;
+    } else if(!isCurrent){
+      isDone=false; canDo=false;
+    } else {
+      isDone=!!doneMap[t.id];
+      canDo=!isDone && doneCount<S.maxTasksPerDay;
+    }
+
+    html+='<div class="ld-task">';
+    html+='<div class="t-ic">'+iconTag(t.icon)+'</div>';
+    html+='<div class="t-info"><b>'+t.name+'</b><span>'+t.desc+'</span></div>';
+    html+='<div class="t-pts">+'+t.pts+'🪙</div>';
+
+    if(isDone){
+      html+='<div class="t-status done">✓ 已完成</div>';
+    } else if(canDo){
+      html+='<div class="t-status can" onclick="event.stopPropagation();openTaskFromDetail('+t.id+')">去完成</div>';
+    } else {
+      html+='<div class="t-status locked">未解锁</div>';
+    }
+
+    html+='</div>';
+  });
+  el.innerHTML=html;
+}
+
+function renderLevelWeek(levelId){
+  var el=document.getElementById('levelWeekCal'); if(!el) return;
+  var wp=S.weekProgress[levelId]||[0,0,0,0,0,0,0];
+  var days=['一','二','三','四','五','六','日'];
+  var html='';
+  for(var d=1;d<=7;d++){
+    var isPast=(levelId<S.currentLevel)||(levelId===S.currentLevel && d<S.currentDay);
+    var isToday=(levelId===S.currentLevel && d===S.currentDay);
+    var isFuture=(levelId>S.currentLevel)||(levelId===S.currentLevel && d>S.currentDay);
+    var cls=isToday?'today':(isPast?'past':'future');
+    html+='<div class="ld-day '+cls+'">';
+    html+='<span class="d-n">周'+days[d-1]+'</span>';
+    html+='<span class="d-c">'+(wp[d-1]||0)+'</span>';
+    html+='</div>';
+  }
+  el.innerHTML=html;
+}
+
+function openTaskFromDetail(taskId){
+  S.viewLevel=S.currentLevel; S.viewDay=S.currentDay;
+  closeLevelDetail();
+  renderMap();
+  setTimeout(function(){ openTask(taskId); },300);
+}
+
 function closeLevelDetail(){
   document.getElementById('level-detail-modal').classList.remove('show');
 }
