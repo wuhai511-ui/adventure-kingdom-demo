@@ -48,7 +48,7 @@ html,body{ height:100%; font-family:"PingFang SC","Microsoft YaHei",system-ui,sa
 .screen.active{ display:block; }
 
 /* Kid Map → 关卡+周历+今日任务 */
-#map-screen{ padding-top:90px; padding-bottom:100px; background:linear-gradient(180deg,#1a3a2a 0%,#2d5a3f 15%,#4a7c59 30%,#7ba587 50%,#b5d6a8 70%,#d4e8d0 100%); min-height:calc(100% + 1px); overflow-y:auto; -webkit-overflow-scrolling:touch; position:relative; }
+#map-screen{ padding-top:90px; padding-bottom:100px; background:linear-gradient(rgba(28,65,54,.12),rgba(24,54,46,.18)),url('assets/backgrounds/adventure_map.jpg') center top/cover no-repeat; min-height:calc(100% + 1px); overflow-y:auto; -webkit-overflow-scrolling:touch; position:relative; }
 .cloud{ position:absolute; color:#fff; opacity:.7; font-size:30px; animation:drift linear infinite; pointer-events:none; filter:drop-shadow(0 2px 4px rgba(0,0,0,.04)); }
 @keyframes drift{ from{ transform:translateX(-60px);} to{ transform:translateX(460px);} }
 .season-tag{ position:absolute; top:78px; left:14px; z-index:8; background:rgba(251,247,240,.95); color:var(--ink); padding:5px 12px; border-radius:14px; font-size:12px; font-weight:800; box-shadow:0 2px 8px rgba(44,24,16,.08); border:1px solid rgba(212,168,67,.12); }
@@ -59,7 +59,7 @@ html,body{ height:100%; font-family:"PingFang SC","Microsoft YaHei",system-ui,sa
 .map-header p{ font-size:12px; opacity:.85; margin-top:2px; }
 
 .map-path{ padding:6px 18px 30px; min-height:120vh; }
-.map-node{ display:flex; align-items:center; gap:12px; padding:14px; border-radius:20px; background:rgba(255,255,255,.92); box-shadow:0 4px 0 rgba(0,0,0,.08),0 6px 18px rgba(0,0,0,.12); cursor:pointer; position:relative; transition:all .2s; }
+.map-node{ display:flex; align-items:center; gap:12px; padding:14px; border-radius:20px; background:rgba(255,250,238,.9); border:1px solid rgba(255,255,255,.68); backdrop-filter:blur(5px); -webkit-backdrop-filter:blur(5px); box-shadow:0 4px 0 rgba(44,24,16,.08),0 8px 22px rgba(34,78,65,.16); cursor:pointer; position:relative; transition:all .2s; }
 .map-node:active{ transform:scale(.97); }
 .map-node.done{ background:linear-gradient(135deg,#e8f5e9,#c8e6c9); border:2px solid #6b8f5e; }
 .map-node.current{ border:3px solid var(--gold); animation:nodePulse 2s ease-in-out infinite; box-shadow:0 4px 0 rgba(212,168,67,.2),0 6px 24px rgba(212,168,67,.25); }
