@@ -2507,7 +2507,7 @@ function toggleWorldCfg(key){
 }
 
 function saveWorldConfig(){
-  if(!S_worldCfgChildId) return;
+  if(S_worldCfgChildId === null || S_worldCfgChildId === undefined) return;
   var openWorlds = [];
   for(var k in S_worldCfgOpen){ if(S_worldCfgOpen[k]) openWorlds.push(k); }
   if(openWorlds.length===0){ toast('至少需要开放一个世界'); return; }
